@@ -80,11 +80,18 @@ export default function EventBanner() {
       </section>
 
       {/* Mobile banner */}
-      <section className="sm:hidden relative bg-mustard py-8 overflow-hidden">
-        <div className="absolute right-0 bottom-0 w-32 h-32 opacity-20">
+      <section className="sm:hidden relative bg-mustard py-10 overflow-hidden border-t-2 border-ink">
+        {/* Film reel decoration - right corner */}
+        <div className="absolute right-2 bottom-2 w-24 h-24 opacity-25">
           <svg width="100%" height="100%" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#1A1817" strokeWidth="3" />
-            <circle cx="60" cy="60" r="30" fill="none" stroke="#1A1817" strokeWidth="2" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#1A1817" strokeWidth="4" />
+            <circle cx="60" cy="60" r="30" fill="none" stroke="#1A1817" strokeWidth="3" />
+            {[0, 60, 120, 180, 240, 300].map((angle) => {
+              const rad = (angle * Math.PI) / 180;
+              const x = 60 + 40 * Math.cos(rad);
+              const y = 60 + 40 * Math.sin(rad);
+              return <circle key={angle} cx={x} cy={y} r="6" fill="#1A1817" />;
+            })}
           </svg>
         </div>
 
@@ -95,18 +102,21 @@ export default function EventBanner() {
           transition={{ duration: 0.6 }}
           className="relative px-4 text-center"
         >
-          <div className="font-heading text-3xl text-ink mb-2 leading-none">
+          <div className="font-heading text-4xl text-ink mb-3 leading-none tracking-tight">
             48 HOUR<br />
             FILM PROJECT
           </div>
-          <div className="font-label font-semibold text-ink text-sm mb-3">
+          <div className="font-label font-semibold text-ink text-base mb-3 tracking-wider">
             DUBAI EDITION
           </div>
-          <div className="flex items-center justify-center gap-2 text-ink/80 mb-4">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <div className="flex items-center justify-center gap-2 text-ink mb-4">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
             </svg>
-            <span className="font-editorial text-sm">27 – 29 NOV 2026</span>
+            <span className="font-editorial text-base font-semibold">27 – 29 NOV 2026</span>
+          </div>
+          <div className="font-heading text-lg text-ink/80 tracking-widest">
+            LIKEMINDS
           </div>
         </motion.div>
       </section>
