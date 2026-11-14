@@ -8,6 +8,9 @@
   --rust: #B4442E;
   --mustard: #D9A53F;
   --dubai-blue: #2E86C1;
+  --font-heading: "Archivo Black", sans-serif;
+  --font-label: "Archivo", sans-serif;
+  --font-editorial: "Courier Prime", monospace;
 }
 
 @theme inline {
@@ -54,4 +57,25 @@ body {
 .film-grain > * {
   position: relative;
   z-index: 2;
+}
+
+/* Scrollbar hiding */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area insets for mobile */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@supports (padding: max(0px)) {
+  .safe-area-inset-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
 }
