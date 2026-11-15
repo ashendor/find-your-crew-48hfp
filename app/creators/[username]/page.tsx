@@ -1,43 +1,36 @@
 'use client';
-
-import { Suspense, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import {Suspense,useEffect,useState} from 'react';
+import {useParams,useRouter} from 'next/navigation';
 import Link from 'next/link';
-import { getCrewSupabase } from '@/lib/crew-supabase';
-import '../../profile/creator.css';
-
-type PublicProfile={username:string;display_name:string|null;headline:string|null;bio:string|null;location:string|null;avatar_url:string|null;categories:string[]|null;skills_tags:string[]|null;looking_for:string[]|null;available_for_collaboration:boolean|null};
-
-function CreatorPublicContent(){
-  const {username}=useParams<{username:string}>();
-  const [profile,setProfile]=useState<PublicProfile|null>(null);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState('');
-  useEffect(()=>{
-    const client=getCrewSupabase();
-    if(!client){setError('Creator profiles are not configured yet.');setLoading(false);return}
-    let active=true;
-    client.from('profiles').select('username,display_name,headline,bio,location,avatar_url,categories,skills_tags,looking_for,available_for_collaboration').eq('username',username).maybeSingle()
-      .then(({data,error})=>{if(!active)return;setProfile(data as PublicProfile|null);if(error)setError(error.message);setLoading(false)});
-    return()=>{active=false};
-  },[username]);
-  return <main className="crew-page"><div className="crew-shell"><Link className="crew-back" href="/">← Find Your Crew</Link>
-    {loading?<p>Loading creator…</p>:error?<p role="alert">{error}</p>:!profile?<p>We couldn't find that creator.</p>:
-    <article className="crew-public"><p className="crew-eyebrow">LIKEMINDS / CREATOR PROFILE</p><div className="crew-public-head">
-      {profile.avatar_url?<img src={profile.avatar_url} alt={profile.display_name||'Creator portrait'}/>:<div className="crew-avatar-preview" aria-hidden="true">✦</div>}
-      <div><h1>{profile.display_name||profile.username}</h1><p>@{profile.username}{profile.location?' · '+profile.location:''}</p></div></div>
-      {profile.headline&&<h2>{profile.headline}</h2>}
-      <p>{profile.available_for_collaboration?'🟢 Open to collaborate':'Currently not available for collaborations'}</p>
-      <div className="crew-divider"/>
-      {profile.bio&&<><h3>About</h3><p>{profile.bio}</p></>}
-      <h3>Creative roles</h3><div className="crew-chips">{(profile.categories||[]).map(x=><span className="crew-chip" key={x}>{x}</span>)}</div>
-      {!!profile.skills_tags?.length&&<><h3>Skills</h3><p>{profile.skills_tags.join(' · ')}</p></>}
-      {!!profile.looking_for?.length&&<><h3>Looking for</h3><p>{profile.looking_for.join(' · ')}</p></>}
-      <div className="crew-divider"/><p>Want to collaborate? Connections and messaging are coming in the next phase.</p><Link href="/auth">Create your Find Your Crew profile →</Link>
-    </article>}
-  </div></main>;
+import {getCrewSupabase} from '@/lib/crew-supabase';
+import type {Creator} from '@/lib/crew-types';
+import {nameOf} from '@/lib/crew-types';
+import CreatorCard from '@/components/CreatorCard';
+import '../../crew-app.css';
+function CreatorDetail(){
+ const {username}=useParams<{username:string}>(),router=useRouter(),client=getCrewSupabase();
+ const [creator,setCreator]=useState<Creator|null>(null),[viewer,setViewer]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{if(!client){setLoading(false);return}let active=true;(async()=>{
+  const [p,u]=await Promise.all([client.from('profiles').select('*').eq('username',username).eq('onboarding_complete',true).maybeSingle(),client.auth.getUser()]);
+  if(!active)return;if(p.error)setError(p.error.message);setCreator(p.data as Creator|null);setViewer(u.data.user?.id||'');setLoading(false)
+ })();return()=>{active=false}},[client,username]);
+ async function connect(){if(!client||!creator)return;if(!viewer){router.push('/auth');return}if(creator.id===viewer){router.push('/profile');return}setBusy(true);setError('');
+ const {error:e}=await client.from('connections').insert({requester_id:viewer,recipient_id:creator.id,status:'pending'});
+ setBusy(false);if(e)setError(e.code==='23505'?'A connection already exists or is awaiting a response.':e.message);else setNotice('Connection request sent. You can follow up from your Connections page.')}
+ const validLink=creator?.portfolio_url&&/^https:\/\//i.test(creator.portfolio_url)?creator.portfolio_url:null;
+ return <main className="fc-app"><div className="fc-main"><Link href="/discover" style={{fontSize:13,color:'#e4b972'}}>← Back to Discover</Link>
+ {loading?<div className="fc-empty">Opening Creator Card…</div>:error?<div role="alert" className="fc-error">{error}</div>:!creator?<div className="fc-empty"><h2>Creator not found.</h2><p>Only completed creator profiles are publicly visible.</p></div>:
+ <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,340px),1fr))',gap:45,marginTop:35,alignItems:'start'}}>
+  <CreatorCard creator={creator}/><div><p className="fc-eyebrow">MEET YOUR NEXT CREATIVE COLLABORATOR</p><h1 className="fc-display" style={{fontSize:'clamp(42px,5vw,75px)'}}>{nameOf(creator)}<em>.</em></h1><p className="fc-lead">{creator.headline||'A filmmaker in the Find Your Crew community.'}</p>
+  {creator.bio&&<><h2 className="fc-section-title">Their story.</h2><p className="fc-lead">{creator.bio}</p></>}
+  <div className="fc-section-header"><h2 className="fc-section-title">The craft.</h2></div><div className="fc-card-tags">{(creator.categories||[]).map(r=><span key={r}>{r}</span>)}</div>
+  <p className="fc-muted" style={{marginTop:20}}>{creator.location||'Location not listed'} · {creator.experience||'Creator'} · {creator.available_for_collaboration?'Open to collaborate':'Not currently available'}</p>
+  {validLink&&<p><a href={validLink} target="_blank" rel="noopener noreferrer" style={{color:'#e3b879'}}>Explore portfolio ↗</a></p>}
+  {notice&&<p className="fc-notice" role="status">{notice}</p>}{error&&<p className="fc-error" role="alert">{error}</p>}
+  <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:30}}>{creator.id!==viewer?<button className="fc-btn" onClick={()=>void connect()} disabled={busy}>{busy?'Sending…':'♡ Request to connect'}</button>:<Link className="fc-btn" href="/profile">Edit my card</Link>}
+  <Link className="fc-btn fc-btn-alt" href="/discover">Find more creators ↗</Link></div>
+  <p className="fc-muted" style={{fontSize:12,marginTop:26}}>Connection requests require acceptance before messaging. Crew invitations are sent separately from Discover.</p>
+ </div></div>}
+ </div></main>
 }
-
-export default function CreatorPublicPage(){
-  return <Suspense fallback={<main className="crew-page"><div className="crew-shell">Loading creator…</div></main>}><CreatorPublicContent /></Suspense>;
-}
+export default function CreatorPublicPage(){return <Suspense fallback={<main className="fc-app"><div className="fc-main">Loading creator…</div></main>}><CreatorDetail/></Suspense>}

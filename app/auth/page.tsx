@@ -15,7 +15,7 @@ export default function AuthPage() {
   const client = getCrewSupabase();
   useEffect(() => {
     if (!client) return;
-    client.auth.getUser().then(({data}) => { if (data.user) router.replace('/profile'); });
+    client.auth.getUser().then(({data}) => { if (data.user) router.replace('/dashboard'); });
   }, [client, router]);
 
   async function submit(e: FormEvent) {
@@ -35,7 +35,7 @@ export default function AuthPage() {
     <Link className="crew-back" href="/">← Find Your Crew</Link>
     <div className="crew-auth-layout"><div className="crew-auth-art"><p>LIKEMINDS PRESENTS</p><h1>Good films start with <em>great crews.</em></h1><span>48 HOUR FILM PROJECT · DUBAI</span></div>
     <section className="crew-paper"><p className="crew-eyebrow">JOIN THE CREATIVE COMMUNITY</p><h2>{sent ? 'Check your inbox.' : 'Find your people.'}</h2>
-      {sent ? <><p>We sent a secure sign-in link to <strong>{email}</strong>. Open it on this device to continue creating your profile.</p><button className="crew-text-button" onClick={()=>setSent(false)}>Use another email</button></> :
+      {sent ? <><p>We sent a secure sign-in link to <strong>{email}</strong>. Open it on this device to start your creator journey.</p><button className="crew-text-button" onClick={()=>setSent(false)}>Use another email</button></> :
       <form onSubmit={submit}><p>Sign in or create an account with your email. No password needed.</p>
       <label htmlFor="crew-email">Email address</label><input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
       {error && <p className="crew-error" role="alert">{error}</p>}
