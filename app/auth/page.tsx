@@ -41,7 +41,7 @@ export default function AuthPage() {
       {error && <p className="crew-error" role="alert">{error}</p>}
       {!client && <p className="crew-error" role="alert">Sign-in is not configured yet. Add the public Supabase environment variables in Vercel.</p>}
       <button className="crew-primary" type="submit" disabled={busy || !client}>{busy ? 'Sending…' : 'Continue with email →'}</button>
-      <small>Creating a LikeMinds profile does not register you for the official film challenge.</small></form>}
+      <small>Creating a Find Your Crew profile does not register you for the official film challenge.</small></form>}
     </section></div>
   </div></main>;
 }
