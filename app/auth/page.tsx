@@ -15,7 +15,7 @@ export default function AuthPage() {
   const client = getCrewSupabase();
   useEffect(() => {
     if (!client) return;
-    client.auth.getUser().then(({data}) => { if (data.user) router.replace('/onboarding'); });
+    client.auth.getUser().then(({data}) => { if (data.user) router.replace('/dashboard'); });
   }, [client, router]);
 
   async function submit(e: FormEvent) {
@@ -24,7 +24,7 @@ export default function AuthPage() {
     setBusy(true); setError('');
     const { error: authError } = await client.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: window.location.origin + '/onboarding', shouldCreateUser: true }
+      options: { emailRedirectTo: window.location.origin + '/profile', shouldCreateUser: true }
     });
     setBusy(false);
     if (authError) setError(authError.message);
