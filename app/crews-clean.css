@@ -1,0 +1,69 @@
+/* My Crews: compact, task-first layout */
+.fc-crews-clean{background:#171411;color:#f4ead9;min-height:100svh;font-family:'DM Sans',Arial,sans-serif}
+.fc-crews-clean .cc-shell{max-width:1250px;margin:0 auto;padding:35px clamp(18px,4vw,54px) 36px}
+.fc-crews-clean .cc-head{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.fc-crews-clean .cc-eyebrow{color:#d8aa72;font-weight:800;font-size:10px;letter-spacing:.17em}
+.fc-crews-clean .cc-head h1{font:700 clamp(35px,4vw,53px)/1.15 'Playfair Display',Georgia,serif;margin:6px 0 7px}
+.fc-crews-clean .cc-head p:last-child{font-size:13px;line-height:1.55;color:#c7b7a5}
+.fc-crews-clean .cc-primary,.fc-crews-clean .cc-secondary{display:inline-flex;align-items:center;justify-content:center;border-radius:7px;min-height:43px;padding:11px 16px;font-size:12px;font-weight:800;white-space:nowrap;text-decoration:none!important;transition:background .2s,transform .2s;cursor:pointer}
+.fc-crews-clean .cc-primary{border:1px solid #b4442e;background:#b4442e;color:#fff!important}
+.fc-crews-clean .cc-secondary{border:1px solid #846c54;background:transparent;color:#ebdbc6!important}
+.fc-crews-clean .cc-primary:disabled,.fc-crews-clean .cc-secondary:disabled{opacity:.55;cursor:not-allowed}
+.fc-crews-clean .cc-primary:not(:disabled):hover{background:#cc5138;transform:translateY(-2px)}
+.fc-crews-clean .cc-secondary:not(:disabled):hover{background:#39291e}
+.fc-crews-clean .cc-how{display:flex;align-items:center;gap:20px;margin:28px 0 31px;padding:16px 20px;border:1px solid #554133;background:#241c17;border-radius:10px}
+.fc-crews-clean .cc-how>span:not(.cc-how-arrow){display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;color:#edddc5}
+.fc-crews-clean .cc-how b{display:grid;place-items:center;width:25px;height:25px;flex:none;border-radius:50%;background:#a46c45;color:#fff;font-size:12px}
+.fc-crews-clean .cc-how-arrow{font-size:19px;color:#95785e}
+.fc-crews-clean .cc-alert,.fc-crews-clean .cc-notice{padding:13px 16px;border-radius:6px;margin-bottom:18px;font-size:12px}
+.fc-crews-clean .cc-alert{background:#542a20;color:#ffe3db;border:1px solid #a34d38}
+.fc-crews-clean .cc-notice{background:#243626;color:#d9f2d8;border:1px solid #527850}
+.fc-crews-clean .cc-section-top{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:17px}
+.fc-crews-clean .cc-section-top h2{font:700 clamp(23px,2.6vw,32px)/1.2 'Playfair Display',Georgia,serif;margin:5px 0 0}
+.fc-crews-clean .cc-count{display:inline-grid;place-items:center;border-radius:50%;background:#423124;color:#eac18c;font:700 12px 'DM Sans',sans-serif;min-width:27px;height:27px;vertical-align:middle;margin-left:5px}
+.fc-crews-clean .cc-subtitle{font-size:12px;color:#bca997;margin-top:6px}
+.fc-crews-clean .cc-text-button{background:none;border:0;color:#d9b17d;font-size:12px}
+.fc-crews-clean .cc-create{padding:24px;margin-bottom:30px;background:#efe6d2;color:#241b14;border-radius:12px}
+.fc-crews-clean .cc-create[hidden]{display:none!important}
+.fc-crews-clean .cc-create .cc-eyebrow{color:#a14c35}
+.fc-crews-clean .cc-create h2{font-size:29px}
+.fc-crews-clean .cc-create .cc-text-button{color:#7c4a35}
+.fc-crews-clean .cc-input-row{display:flex;align-items:flex-end;gap:12px}
+.fc-crews-clean .cc-input-row label{flex:1;min-width:0;font-size:12px;font-weight:800}
+.fc-crews-clean .cc-input-row label span{color:#b4442e}
+.fc-crews-clean .cc-input-row input,.fc-crews-clean .cc-optional textarea{display:block;width:100%;border:1px solid #baa991;border-radius:6px;background:#fffaf0;color:#211b16;padding:13px 14px;font-size:14px;margin-top:8px;min-height:45px}
+.fc-crews-clean .cc-optional{margin-top:18px}
+.fc-crews-clean .cc-optional summary{cursor:pointer;font-size:12px;font-weight:700;color:#7b4b36}
+.fc-crews-clean .cc-describe-label{display:block;font-size:12px;font-weight:800;margin-top:13px}
+.fc-crews-clean .cc-optional textarea{resize:vertical;min-height:90px}
+.fc-crews-clean .cc-invitations{border:1px solid #b88150;border-radius:12px;padding:22px;margin-bottom:28px;background:#31241b}
+.fc-crews-clean .cc-invite{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #79563b;padding:15px 0}
+.fc-crews-clean .cc-invite-copy strong{font-size:16px}
+.fc-crews-clean .cc-invite-copy p{font-size:12px;color:#cdb8a0;margin-top:5px}
+.fc-crews-clean .cc-invite-actions{display:flex;gap:9px}
+.fc-crews-clean .cc-teams{padding-top:2px}
+.fc-crews-clean .cc-discover-link{font-size:12px;font-weight:700;color:#e3b47a!important;white-space:nowrap}
+.fc-crews-clean .cc-discover-link:hover{text-decoration:underline!important}
+.fc-crews-clean .cc-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fc-crews-clean .cc-team-card{border:1px solid #6b513b;background:#271e18;border-radius:12px;padding:23px;min-width:0}
+.fc-crews-clean .cc-team-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.fc-crews-clean .cc-tag{font-size:9px;font-weight:800;letter-spacing:.1em;color:#251b13;background:#dbaf77;border-radius:3px;padding:7px 9px}
+.fc-crews-clean .cc-tag-joined{background:#b9c9a8}
+.fc-crews-clean .cc-member-count{font-size:11px;color:#c3b099}
+.fc-crews-clean .cc-team-card h3{font:700 28px/1.25 'Playfair Display',Georgia,serif;overflow-wrap:anywhere}
+.fc-crews-clean .cc-team-description{font-size:12px;line-height:1.6;color:#cdbba5;margin:9px 0 20px}
+.fc-crews-clean .cc-team-actions{display:flex;flex-wrap:wrap;gap:9px}
+.fc-crews-clean .cc-members{padding:15px 0 0;margin-top:18px;border-top:1px solid #67513f;list-style:none}
+.fc-crews-clean .cc-members li{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;padding:8px 0}
+.fc-crews-clean .cc-members small{color:#b9a28c}
+.fc-crews-clean .cc-member-status{color:#b7d598;font-size:10px;text-transform:capitalize}
+.fc-crews-clean .cc-joined-note{color:#b5d09e;font-size:12px;font-weight:700}
+.fc-crews-clean .cc-empty{border:1px dashed #826a54;border-radius:12px;padding:44px 22px;text-align:center;background:#211a16}
+.fc-crews-clean .cc-empty-symbol{font-size:27px;color:#d7ae75;margin-bottom:9px}
+.fc-crews-clean .cc-empty h3{font:700 29px 'Playfair Display',Georgia,serif}
+.fc-crews-clean .cc-empty p{font-size:12px;line-height:1.6;color:#bba994;max-width:400px;margin:10px auto 20px}
+.fc-crews-clean .cc-empty-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px}
+.fc-crews-clean .cc-footer{display:flex;justify-content:space-between;gap:15px;margin-top:40px;color:#897563;font-size:10px;letter-spacing:.14em;font-weight:800}
+@media(max-width:750px){.fc-crews-clean .cc-shell{padding:22px 17px 30px}.fc-crews-clean .cc-head{align-items:flex-start;gap:12px}.fc-crews-clean .cc-head h1{font-size:35px}.fc-crews-clean .cc-head p:last-child{font-size:12px;max-width:290px}.fc-crews-clean .cc-head-create{min-height:39px;padding:10px 12px;font-size:11px}.fc-crews-clean .cc-how{gap:7px;padding:13px 10px;margin:22px 0 25px}.fc-crews-clean .cc-how>span:not(.cc-how-arrow){font-size:10px;gap:6px}.fc-crews-clean .cc-how b{height:21px;width:21px;font-size:10px}.fc-crews-clean .cc-how-arrow{font-size:13px}.fc-crews-clean .cc-team-grid{grid-template-columns:1fr}.fc-crews-clean .cc-section-top h2{font-size:27px}.fc-crews-clean .cc-create{padding:17px}.fc-crews-clean .cc-invitations{padding:17px}}
+@media(max-width:450px){.fc-crews-clean .cc-head{flex-direction:column}.fc-crews-clean .cc-head-create{align-self:flex-start}.fc-crews-clean .cc-how{gap:5px;justify-content:space-between}.fc-crews-clean .cc-how>span:not(.cc-how-arrow){font-size:9px;gap:5px}.fc-crews-clean .cc-how b{width:19px;height:19px}.fc-crews-clean .cc-how-arrow{font-size:12px}.fc-crews-clean .cc-input-row{flex-direction:column;align-items:stretch}.fc-crews-clean .cc-invite{align-items:flex-start;flex-direction:column}.fc-crews-clean .cc-empty-actions{flex-direction:column}.fc-crews-clean .cc-empty-actions>*{width:100%}.fc-crews-clean .cc-footer{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.fc-crews-clean .cc-primary,.fc-crews-clean .cc-secondary{transition:none}}

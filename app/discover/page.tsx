@@ -9,7 +9,7 @@ import '../crew-app.css';
 export default function Discover(){
  const {client,user,userId,loading,error:userError}=useCrewUser();
  const [creators,setCreators]=useState<Creator[]>([]),[history,setHistory]=useState<string[]>([]),[connections,setConnections]=useState<string[]>([]),[crews,setCrews]=useState<Crew[]>([]);
- const [mode,setMode]=useState<'swipe'|'grid'>('swipe'),[role,setRole]=useState('All roles'),[search,setSearch]=useState(''),[available,setAvailable]=useState(false);
+ const [mode,setMode]=useState<'swipe'|'grid'>('grid'),[role,setRole]=useState('All roles'),[search,setSearch]=useState(''),[available,setAvailable]=useState(false);
  const [index,setIndex]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const [target,setTarget]=useState<Creator|null>(null),[crewId,setCrewId]=useState(''),[newCrew,setNewCrew]=useState(''),[inviteRole,setInviteRole]=useState('Creator'),[touchX,setTouchX]=useState<number|null>(null),[drag,setDrag]=useState(0);
  const refresh=useCallback(async()=>{if(!client||!userId)return;const [a,b,c,d]=await Promise.all([
@@ -50,8 +50,8 @@ export default function Discover(){
  function endTouch(){if(!active)return;if(drag>80)void act(active,'connect');else if(drag< -80)void act(active,'pass');setDrag(0);setTouchX(null)}
  if(loading||!user)return <main className="fc-app"><div className="fc-main">{userError||'Opening Discover…'}</div></main>;
  return <main className="fc-app fc-app--cinematic fc-workspace-page"><CrewNav userName={user.display_name}/><div className="fc-main">
-  <p className="fc-eyebrow">DISCOVER / CREATIVE CONNECTIONS</p><h1 className="fc-display">Find your <em>people.</em></h1><p className="fc-lead">Every card is a real creator. Swipe to connect, invite someone to your crew, or keep exploring.</p>
-  <div className="fc-filters"><div className="fc-toggle" aria-label="Discovery display"><button type="button" className={mode==='swipe'?'active':''} onClick={()=>setMode('swipe')}>▧ Swipe mode</button><button type="button" className={mode==='grid'?'active':''} onClick={()=>setMode('grid')}>▦ Explore grid</button></div>
+  <p className="fc-eyebrow">DISCOVER / CREATIVE CONNECTIONS</p><h1 className="fc-display">Find your <em>people.</em></h1><p className="fc-lead">Browse real filmmakers, filter by role and connect with people you'd like to work with.</p>
+  <div className="fc-filters"><div className="fc-toggle" aria-label="Discovery display"><button type="button" className={mode==='swipe'?'active':''} onClick={()=>setMode('swipe')}>Swipe</button><button type="button" className={mode==='grid'?'active':''} onClick={()=>setMode('grid')}>Grid</button></div>
    <input className="fc-filter-input" aria-label="Search creators" placeholder="Search creative people…" value={search} onChange={e=>setSearch(e.target.value)}/>
    <select className="fc-filter-input" aria-label="Filter by role" value={role} onChange={e=>setRole(e.target.value)}><option>All roles</option>{ROLES.map(r=><option key={r}>{r}</option>)}</select>
    <label style={{display:'flex',gap:7,alignItems:'center',fontSize:12}}><input type="checkbox" checked={available} onChange={e=>setAvailable(e.target.checked)}/> Open to collaborate</label>
