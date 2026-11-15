@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import SignOutButton from '@/components/SignOutButton';
@@ -8,6 +8,7 @@ import CrewInboxDrawer from '@/components/CrewInboxDrawer';
 export default function CrewNav({userName}:{userName?:string}){
  const path=usePathname();
  const [inboxOpen,setInboxOpen]=useState(false);
+ useEffect(()=>{const open=()=>setInboxOpen(true);window.addEventListener('fc:open-inbox',open);return()=>window.removeEventListener('fc:open-inbox',open)},[]);
  return <>
   <header className="fc-nav fc-nav--studio fc-nav--two-pillar">
    <Link href="/" className="fc-wordmark" title="Find Your Crew homepage">FIND YOUR CREW<span>BY LIKEMINDS · DUBAI '26</span></Link>
