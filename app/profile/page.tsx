@@ -24,6 +24,16 @@ export default function ProfilePage(){
   if(!active)return;
   if(e){setError(e.message);setLoading(false);return}
   if(!data?.onboarding_complete){router.replace('/onboarding');return}
+  // The existing approved /profile OAuth and magic-link callback must remain intact.
+  // A fresh sign-in should open My Space; deliberate visits to /profile still edit the card.
+  const returnedFromSignIn = window.sessionStorage.getItem('fc:return-from-signin')==='1';
+  const callbackQuery = new URLSearchParams(window.location.search);
+  const isAuthCallback = callbackQuery.has('code') || callbackQuery.has('token_hash') || window.location.hash.includes('access_token=');
+  if(returnedFromSignIn || isAuthCallback){
+   window.sessionStorage.removeItem('fc:return-from-signin');
+   router.replace('/dashboard');
+   return;
+  }
   const p=data as Creator;
   setForm({username:p.username||'',display_name:p.display_name||'',headline:p.headline||'',bio:p.bio||'',location:p.location||'',avatar_url:p.avatar_url||'',primary_role:p.primary_role||'',categories:p.categories||[],skills_tags:(p.skills_tags||[]).join(', '),intent:p.intent||'both',experience:p.experience||'emerging',portfolio_url:p.portfolio_url||'',available_for_48hfp:!!p.available_for_48hfp,available_for_collaboration:!!p.available_for_collaboration});
   setLoading(false)
