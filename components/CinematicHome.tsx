@@ -16,7 +16,7 @@ const samples = [
   {name:'Nadia R.',role:'Actors',other:'Performer',image:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=560&q=80'},
 ];
 const backgrounds = {
-  hero:'https://images.unsplash.com/photo-1781127445140-969397fa151c?auto=format&fit=crop&w=2000&q=82',
+  hero:'/hero-filmset.webp',
   discover:'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1800&q=80',
   how:'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1800&q=80',
   challenge:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=2000&q=85',
