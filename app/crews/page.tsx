@@ -11,7 +11,9 @@ export default function Crews(){
  const [mine,setMine]=useState<Crew[]>([]),[invitations,setInvitations]=useState<Inv[]>([]),[members,setMembers]=useState<CrewMember[]>([]),[people,setPeople]=useState<Record<string,Creator>>({});
  const [name,setName]=useState(''),[description,setDescription]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const refresh=useCallback(async()=>{if(!client||!userId)return;
-  const [a,b,c]=await Promise.all([client.from('crews').select('*').eq('owner_id',userId).order('created_at',{ascending:false}),client.from('crew_members').select('*,crews(name)').eq('user_id',userId).order('created_at',{ascending:false}),client.from('crew_members').select('*').in('crew_id',(await client.from('crews').select('id').eq('owner_id',userId)).data?.map(x=>x.id)||['00000000-0000-0000-0000-000000000000'])]);
+  const [a,b]=await Promise.all([client.from('crews').select('*').eq('owner_id',userId).order('created_at',{ascending:false}),client.from('crew_members').select('*,crews(name)').eq('user_id',userId).order('created_at',{ascending:false})]);
+  const ownedIds=(a.data||[]).map(x=>x.id);
+  const c=ownedIds.length?await client.from('crew_members').select('*').in('crew_id',ownedIds):{data:[] as CrewMember[]};
   if(a.error)setError(a.error.message);else setMine((a.data||[]) as Crew[]);
   if(b.error)setError(b.error.message);else setInvitations((b.data||[]) as Inv[]);
   setMembers((c.data||[]) as CrewMember[]);
