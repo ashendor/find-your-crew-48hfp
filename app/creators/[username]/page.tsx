@@ -19,7 +19,7 @@ import '../../platform.css';
 import '../../brand-skin.css';
 function CreatorDetail(){
  const {username}=useParams<{username:string}>(),router=useRouter(),params=useSearchParams(),client=getCrewSupabase();
- const [creator,setCreator]=useState<Creator|null>(null),[viewer,setViewer]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[open,setOpen]=useState(false),[extras,setExtras]=useState<Work[]>([]),[connected,setConnected]=useState(false),[tab,setTab]=useState<'work'|'projects'|'crews'>('work');
+ const [creator,setCreator]=useState<Creator|null>(null),[viewer,setViewer]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[open,setOpen]=useState(false),[extras,setExtras]=useState<Work[]>([]),[connected,setConnected]=useState(false),[tab,setTab]=useState<'work'|'projects'|'teams'>('work');
  useEffect(()=>{if(!client){setLoading(false);return}let active=true;(async()=>{
   const [p,u]=await Promise.all([client.from('profiles').select('*').eq('username',username).eq('onboarding_complete',true).maybeSingle(),client.auth.getUser()]);
   if(!active)return;if(p.error)setError(p.error.message);const person=p.data as Creator|null;const me=u.data.user?.id||'';setCreator(person);setViewer(me);
@@ -40,7 +40,7 @@ function CreatorDetail(){
     {(creator.bio||creator.headline)&&<p className="lm-bio">{creator.bio||creator.headline}</p>}
     {creator.id!==viewer&&<div className="lm-identity-actions"><button className="lm-btn" type="button" onClick={connect}>Connect</button>{connected&&<Link className="lm-btn-line" href="/inbox">Message</Link>}</div>}
   </div>
-  <Tabs label="Creator" current={tab} onChange={item=>setTab(item as typeof tab)} items={[{id:'work',label:'Work'},{id:'projects',label:'Projects'},{id:'crews',label:'Crews'}]} />
+  <Tabs label="Creator" current={tab} onChange={item=>setTab(item as typeof tab)} items={[{id:'work',label:'Work'},{id:'projects',label:'Projects'},{id:'teams',label:'Teams'}]} />
   {tab==='work'&&<PlatformBoard items={profilePlatforms(creator)} extras={extras.map(item=>({id:item.id,name:item.title,href:item.url}))} mine={false} />}
   <ProfilePanels userId={creator.id} tab={tab} owner={false} />
   <ConnectSheet open={open} onClose={()=>setOpen(false)} recipientId={creator.id} recipientName={nameOf(creator)} recipientAvatar={creator.avatar_url||undefined} presetProjectId={params.get('project')||undefined}/>
@@ -57,7 +57,7 @@ function CreatorDetail(){
   {error&&<p className="fc-error" role="alert">{error}</p>}
   <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:30}}>{creator.id!==viewer?<button className="fc-btn" onClick={connect}>Connect</button>:<Link className="fc-btn" href="/profile">Edit my card</Link>}
   <Link className="fc-btn fc-btn-alt" href={viewer?'/explore':'/auth'}>Find more creators ↗</Link></div>
-  <p className="fc-muted" style={{fontSize:12,marginTop:26}}>Connecting asks why, and a team name only when that project requires one. Accepting opens a chat. It does not join a crew or a project.</p>
+  <p className="fc-muted" style={{fontSize:12,marginTop:26}}>Connecting asks why, and a team name only when that project requires one. Accepting opens a chat. It does not join a team or a project.</p>
  </div></div>}
  {creator&&creator.id!==viewer&&<ConnectSheet open={open} onClose={()=>setOpen(false)} recipientId={creator.id} recipientName={nameOf(creator)} presetProjectId={params.get('project')||undefined}/>}
  </>;

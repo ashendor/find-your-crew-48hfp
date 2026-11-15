@@ -11,7 +11,7 @@ import Tabs from '@/components/Tabs';
 const stills = ['/brand/poster-heist.jpg','/brand/poster-scifi.jpg','/brand/past-jbr-finals.jpg','/brand/poster-documentary.jpg','/brand/poster-western.jpg','/brand/past-crew-at-monitor-2019.jpg'];
 
 export default function CreatorDesk({creator, viewer, onConnect, platforms, extras}:{creator:Creator; viewer:string; onConnect:()=>void; platforms: PlatformCard[]; extras: (PlatformCard & {id: string})[]}){
-  const [tab, setTab] = useState<'work'|'projects'|'crews'>('work');
+  const [tab, setTab] = useState<'work'|'projects'|'teams'>('work');
   const [works, setWorks] = useState<Work[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [crews, setCrews] = useState<Crew[]>([]);
@@ -56,12 +56,12 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
         </div>
       </div>
     </div>
-    <Tabs label="Creator" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'work', label:'Work'},{id:'projects', label:'Projects'},{id:'crews', label:'Crews'}]} />
+    <Tabs label="Creator" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'work', label:'Work'},{id:'projects', label:'Projects'},{id:'teams', label:'Teams'}]} />
     {tab === 'work' && <>
       <PlatformBoard items={platforms} extras={extras} mine={false} />
       {works.length ? <div className="lm-desk-grid">{works.map((work, index) => <WorkShot key={work.id} url={work.url} fallback={stills[index % stills.length]}><i>{work.platform || 'Link'}</i><span>{work.title}</span></WorkShot>)}</div> : <div className="lm-empty"><strong>No work shared yet</strong><p>Shared links from this creator will show up here.</p></div>}
     </>}
     {tab === 'projects' && (projects.length ? <div>{projects.map(project => <Link className="lm-rowitem" key={project.id} href={'/projects/' + project.id}><span className="lm-avatar">{project.name.slice(0,1)}</span><div><strong>{project.name}</strong><p>{project.description || 'Project'}</p></div></Link>)}</div> : <div className="lm-empty"><strong>No projects yet</strong><p>Projects this creator starts will show up here.</p></div>)}
-    {tab === 'crews' && (crews.length ? <div>{crews.map(crew => <article className="lm-rowitem" key={crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><strong>{crew.name}</strong><p>{crew.description || 'Crew'}</p></div></article>)}</div> : <div className="lm-empty"><strong>No crews yet</strong><p>A crew appears here only after this creator creates one.</p></div>)}
+    {tab === 'teams' && (crews.length ? <div>{crews.map(crew => <Link className="lm-rowitem" key={crew.id} href={'/teams/' + crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><strong>{crew.name}</strong><p>{crew.description || 'Team'}</p></div></Link>)}</div> : <div className="lm-empty"><strong>No teams yet</strong><p>A team appears here only after this creator creates one.</p></div>)}
   </section>;
 }

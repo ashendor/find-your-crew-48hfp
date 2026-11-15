@@ -136,7 +136,7 @@ function ProfilePage(){
  if(loading)return <main className="fc-app"><div className="fc-main">{error||'Opening your Creator Studio…'}</div></main>;
  if(!client)return <main className="fc-app"><div className="fc-main">Sign-in configuration is unavailable.</div></main>;
  const asked=params.get('tab');
- const tab=asked==='edit'||asked==='projects'||asked==='crews'||asked==='work'||asked==='settings'?asked:'work';
+ const tab=asked==='crews'?'teams':asked==='edit'||asked==='projects'||asked==='teams'||asked==='work'||asked==='settings'?asked:'work';
  const platforms: {name:string;key:LinkKey;href:string}[] = [{name:'Instagram',key:'instagram_url',href:form.instagram_url},{name:'YouTube',key:'youtube_url',href:form.youtube_url},{name:'Vimeo',key:'vimeo_url',href:form.vimeo_url},{name:'Behance',key:'behance_url',href:form.behance_url},{name:'Dribbble',key:'dribbble_url',href:form.dribbble_url},{name:'Website',key:'website_url',href:form.website_url}];
  return <PlatformShell>
   <header className="lm-top">{tab==='edit'?<><BackButton fallback="/profile?tab=settings" label="Back" /><h1 className="lm-bar-title">Edit profile</h1><div className="lm-nav-actions"><HeaderActions /><button className="lm-done" type="submit" form="lm-edit" disabled={saving||photoBusy}>{saving?'Saving':'Done'}</button></div></>:tab==='settings'?<><BackButton fallback="/profile" label="Back" /><h1 className="lm-bar-title">Settings</h1><HeaderActions /></>:<><div className="lm-brand"><BackButton fallback="/home" /><Link className="lm-word" href="/home">LikeMinds</Link></div><HeaderActions /></>}</header>
@@ -146,7 +146,7 @@ function ProfilePage(){
       <p className="lm-role">{form.primary_role||'Creator'}{form.location?' · '+form.location:''}</p>
       {(form.bio||form.headline)&&<p className="lm-bio">{form.bio||form.headline}</p>}
     </div>
-    <Tabs label="Profile" current={tab} items={[{id:'work', label:'Work', href:'/profile?tab=work'},{id:'projects', label:'Projects', href:'/profile?tab=projects'},{id:'crews', label:'Crews', href:'/profile?tab=crews'}]} />
+    <Tabs label="Profile" current={tab} items={[{id:'work', label:'Work', href:'/profile?tab=work'},{id:'projects', label:'Projects', href:'/profile?tab=projects'},{id:'teams', label:'Teams', href:'/profile?tab=teams'}]} />
     {tab==='work'&&<>
       <PlatformBoard items={platforms} extras={extras.map(item=>({id:item.id,name:item.title,href:item.url}))} mine onLink={item=>{const row=platforms.find(platform=>platform.name===item.name);if(!row)return;setLinking(row);setLinkUrl('');setOtherName('');setLinkError('')}} onAddOther={()=>{setLinking({name:'Others'});setLinkUrl('');setOtherName('');setLinkError('')}} onRemoveExtra={id=>void removeExtra(id)} />
     </>}

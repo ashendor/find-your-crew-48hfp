@@ -74,7 +74,7 @@ export default function InboxPage(){
     }
     setProjectLatest(projectMap);
     setInvites([
-      ...crewRows.map(row => ({id:row.id, kind:'crew' as const, label:nameOf(row.crews) || 'Crew', role:row.role})),
+      ...crewRows.map(row => ({id:row.id, kind:'crew' as const, label:nameOf(row.crews) || 'Team', role:row.role})),
       ...projectRows.map(row => ({id:row.id, kind:'project' as const, label:nameOf(row.projects) || 'Project', role:row.role})),
     ]);
   }, [client, userId]);
@@ -125,7 +125,7 @@ export default function InboxPage(){
     if (hours < 24) return hours + 'h';
     return Math.round(hours / 24) + 'd';
   };
-  const preview = (item:Connection) => item.note || (item.purpose === 'project' ? 'Let’s collaborate' + (projects[item.project_id || ''] ? ' on ' + projects[item.project_id || ''].name : '') : item.purpose === 'crew' ? 'About a crew' : 'Wants to connect');
+  const preview = (item:Connection) => item.note || (item.purpose === 'project' ? 'Let’s collaborate' + (projects[item.project_id || ''] ? ' on ' + projects[item.project_id || ''].name : '') : item.purpose === 'crew' ? 'About a team' : 'Wants to connect');
   const face = (person?:Creator) => person?.avatar_url ? <img src={person.avatar_url} alt="" /> : <span className="lm-avatar">{(person?.display_name || '?').slice(0,1)}</span>;
   const group = <span className="lm-avatar lm-group" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="9" cy="9" r="2.2"/><circle cx="16" cy="10" r="1.8"/><path d="M4.5 17.5c.7-2.2 2.2-3.3 4.5-3.3s3.8 1.1 4.5 3.3M13 17.5c.5-1.6 1.6-2.5 3.2-2.5 1.4 0 2.5.7 3.1 2"/></svg></span>;
   const isUnread = (id:string, message?:Message) => !!message && message.sender_id !== userId && seen[id] !== message.created_at;
@@ -154,12 +154,12 @@ export default function InboxPage(){
         const last = projectLatest[row.id];
         return <Link className="lm-inbox-row" key={row.id} href={'/projects/' + row.id} onClick={() => { if (!last) return; setSeen(prev => { const next = {...prev, ['project:' + row.id]: last.created_at}; sessionStorage.setItem('lm:inbox-seen', JSON.stringify(next)); return next; }); }}>{group}<div><strong>{row.project.name}</strong><p>{last?.body || 'Project chat'}</p></div><span className="lm-inbox-meta"><time>{ago(row.at)}</time>{isUnread('project:' + row.id, last) && <i className="lm-unread" aria-label="Unread"/>}</span></Link>;
       })}
-      {!conversations.length && <div className="lm-empty"><strong>No conversations yet</strong><p>Connect with a creator first. Accepting a request opens a chat and nothing else.</p><Link className="lm-btn" href="/explore">Find creators</Link></div>}
+      {!conversations.length && <div className="lm-empty"><strong>No conversations yet</strong><p>Connect with someone first. Accepting a request opens a chat and nothing else.</p><Link className="lm-btn" href="/explore">Find people</Link></div>}
     </div>}
     {tab === 'messages' && active && <div className="lm-thread">
       <button className="lm-choice" type="button" onClick={() => setThread(null)} style={{border:0}}>‹ {other(active)?.display_name}</button>
       {messages.map(message => <p key={message.id} className={message.sender_id === userId ? 'lm-bubble mine' : 'lm-bubble'}>{message.body}</p>)}
-      {!messages.length && <p className="lm-muted">Say hello. This chat does not add anyone to a crew or a project.</p>}
+      {!messages.length && <p className="lm-muted">Say hello. This chat does not add anyone to a team or a project.</p>}
       <form onSubmit={e => void send(e)} className="lm-row"><input className="lm-field" value={draft} onChange={e => setDraft(e.target.value)} aria-label="Message" placeholder="Message" /><button className="lm-btn" disabled={busy || !draft.trim()}>Send</button></form>
     </div>}
     {tab === 'requests' && <>
@@ -171,10 +171,10 @@ export default function InboxPage(){
     </>}
     {tab === 'invites' && <>
       {invites.map(invite => <article key={invite.kind + invite.id}>
-        <div className="lm-inbox-row">{group}<div><strong>{invite.label}</strong><p>{invite.kind === 'crew' ? 'Crew invitation' : 'Project invitation'} · {invite.role}</p></div></div>
+        <div className="lm-inbox-row">{group}<div><strong>{invite.label}</strong><p>{invite.kind === 'crew' ? 'Team invitation' : 'Project invitation'} · {invite.role}</p></div></div>
         <div className="lm-actions lm-pair" style={{margin:'0 0 12px 60px'}}><button className="lm-btn" type="button" disabled={busy} onClick={() => void respondInvite(invite,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respondInvite(invite,'declined')}>Decline</button></div>
       </article>)}
-      {!invites.length && <div className="lm-empty"><strong>No invitations</strong><p>Crew and project invites show up here. They are separate from connection requests.</p></div>}
+      {!invites.length && <div className="lm-empty"><strong>No invitations</strong><p>Team and project invites show up here. They are separate from connection requests.</p></div>}
     </>}
   </PlatformShell>;
 }

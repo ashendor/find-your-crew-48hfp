@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
       {source: '/dashboard', destination: '/home', permanent: false},
       {source: '/discover', destination: '/explore', permanent: false},
       {source: '/connections', destination: '/inbox', permanent: false},
+      {source: '/crews', destination: '/teams', permanent: false},
+      {source: '/crews/:path*', destination: '/teams/:path*', permanent: false},
     ];
   },
   cacheComponents: true,

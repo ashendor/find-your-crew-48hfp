@@ -89,7 +89,7 @@ function ProjectScreen(){
   async function linkCrew(crewId:string){
     if (!client || !crewId) return;
     const {error:insertError} = await client.from('crew_projects').insert({crew_id:crewId, project_id:id});
-    if (insertError) setError(insertError.message); else { setNotice('Crew linked to this project. Members were not added automatically.'); void load(); }
+    if (insertError) setError(insertError.message); else { setNotice('Team linked to this project. Members were not added automatically.'); void load(); }
   }
 
   const when = (start?:string|null, end?:string|null) => {
@@ -114,7 +114,7 @@ function ProjectScreen(){
         {!!project.required_roles?.length && <div><span>Roles</span><div className="lm-pills">{project.required_roles.map(role => <span key={role}>{role}</span>)}</div></div>}
       </div>
       <div className="lm-actions">
-        <Link className="lm-btn" href={'/explore?project=' + project.id}>Find creators</Link>
+        <Link className="lm-btn" href={'/explore?tab=people&project=' + project.id}>Find people</Link>
         {!member && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Request to join</button>}
       </div>
     </div>}
@@ -127,9 +127,9 @@ function ProjectScreen(){
         <label>Role<input className="lm-field" name="role" defaultValue="Member" /></label>
         <button className="lm-btn" type="submit">Send invitation</button>
       </form>}
-      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a crew you own
+      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a team you own
         <select className="lm-field" defaultValue="" onChange={e => void linkCrew(e.target.value)}>
-          <option value="">Choose a crew</option>
+          <option value="">Choose a team</option>
           {crews.filter(crew => !linked.includes(crew.id)).map(crew => <option key={crew.id} value={crew.id}>{crew.name}</option>)}
         </select>
       </label>}

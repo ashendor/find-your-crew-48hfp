@@ -279,7 +279,7 @@ button.lm-plat.lm-plat-add{border:1px solid #E6DDD0}
   .lm-desk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .lm-connect.lm-sheet{align-items:flex-start;justify-content:flex-end;background:transparent;padding:92px 28px 28px 0;pointer-events:none}
   .lm-connect .lm-sheet-panel{pointer-events:auto;position:relative;width:380px;max-height:calc(100svh - 120px);border-radius:24px;padding:22px 20px 18px;animation:none;box-shadow:0 18px 50px #1A181724}
-  .lm-connect .lm-grab,.lm-connect h2,.lm-connect .lm-purpose-native,.lm-connect .lm-phone-label,.lm-connect .lm-project-set,.lm-connect .lm-actions .lm-btn-line,.lm-connect .lm-muted{display:none}
+  .lm-connect .lm-grab,.lm-connect h2,.lm-connect .lm-purpose-native,.lm-connect .lm-phone-label,.lm-connect .lm-actions .lm-btn-line{display:none}
   .lm-connect .lm-kicker{margin:0;font-size:28px;letter-spacing:-.04em;text-transform:none;color:#1A1817}
   .lm-connect-x{position:absolute;top:18px;right:16px;border:0;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:#1A1817}
   .lm-connect-who{display:flex;align-items:center;gap:12px}
