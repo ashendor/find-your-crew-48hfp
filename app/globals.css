@@ -79,3 +79,7 @@ body {
     padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
   }
 }
+
+/* Consistent mobile viewport foundation across pages. */
+html{width:100%;min-height:100%;overflow-x:clip}
+body{width:100%;min-height:100svh;overflow-x:clip}

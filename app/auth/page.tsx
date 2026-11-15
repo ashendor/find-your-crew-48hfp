@@ -79,7 +79,7 @@ export default function AuthPage() {
     <div className="crew-auth-body">
       <section className="crew-auth-editorial" aria-label="Welcome">
         <div className="crew-auth-edition"><span className="crew-auth-rec"/> THE CREATIVE CONNECTION / ISSUE 001</div>
-        <div><div className="crew-auth-slanted">GOOD FILMS</div><h1>AREN'T MADE <em>ALONE.</em></h1><p>Discover the people who make your next big idea possible.</p>
+        <div className="crew-auth-editorial-main"><h1 className="crew-auth-main-heading"><span>GOOD FILMS</span><span>AREN'T MADE</span><em>ALONE.</em></h1><p>Discover the people who make your next big idea possible.</p>
           <div className="crew-auth-collage" aria-hidden="true"><span>◈ DIRECTORS</span><span>✳ CREATORS</span><span>◎ DREAMERS</span></div>
         </div>
         <div className="crew-auth-editorial-footer"><span>CREATE <i>✳</i> CONNECT <i>✳</i> COLLABORATE</span><span>48HFP / NOV 27—29</span></div>
@@ -87,7 +87,6 @@ export default function AuthPage() {
       <section className="crew-auth-glass" aria-label="Sign in to your crew">
         <div className="crew-auth-panel-top"><span>✳ &nbsp; YOUR PASS TO THE CREW</span><span>001 / 001</span></div>
         <div className="crew-auth-panel-main">
-          <div className="crew-auth-panel-stamp" aria-hidden="true">FYC<span>✳</span></div>
           <p className="crew-auth-panel-eyebrow">WELCOME TO YOUR CREATIVE WORLD</p>
           <h2>{sent ? 'Check your inbox.' : <>Enter the<br/><em>crew.</em></>}</h2>
           {sent ? <>
