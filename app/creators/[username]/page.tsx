@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCrewSupabase } from '@/lib/crew-supabase';
@@ -8,7 +8,7 @@ import '../../profile/creator.css';
 
 type PublicProfile={username:string;display_name:string|null;headline:string|null;bio:string|null;location:string|null;avatar_url:string|null;categories:string[]|null;skills_tags:string[]|null;looking_for:string[]|null;available_for_collaboration:boolean|null};
 
-export default function CreatorPublicPage(){
+function CreatorPublicContent(){
   const {username}=useParams<{username:string}>();
   const [profile,setProfile]=useState<PublicProfile|null>(null);
   const [loading,setLoading]=useState(true);
@@ -33,7 +33,11 @@ export default function CreatorPublicPage(){
       <h3>Creative roles</h3><div className="crew-chips">{(profile.categories||[]).map(x=><span className="crew-chip" key={x}>{x}</span>)}</div>
       {!!profile.skills_tags?.length&&<><h3>Skills</h3><p>{profile.skills_tags.join(' · ')}</p></>}
       {!!profile.looking_for?.length&&<><h3>Looking for</h3><p>{profile.looking_for.join(' · ')}</p></>}
-      <div className="crew-divider"/><p>Want to collaborate? Connections and messaging are coming in the next phase.</p><Link href="/auth">Create your LikeMinds profile →</Link>
+      <div className="crew-divider"/><p>Want to collaborate? Connections and messaging are coming in the next phase.</p><Link href="/auth">Create your Find Your Crew profile →</Link>
     </article>}
   </div></main>;
+}
+
+export default function CreatorPublicPage(){
+  return <Suspense fallback={<main className="crew-page"><div className="crew-shell">Loading creator…</div></main>}><CreatorPublicContent /></Suspense>;
 }
