@@ -27,3 +27,13 @@ html{scroll-behavior:smooth}.cinematic{--cream:#efe6d2;--red:#b4442e;--gold:#d9a
 @media(max-width:640px){.cin-likeminds{font-size:10px;letter-spacing:.08em}.cin-likeminds small{font-size:6px;letter-spacing:.08em}.cin-brand-divider{height:24px;margin:0 1px}.cin-brand{gap:8px}.cin-hero-frame{right:35px;bottom:53px;font-size:8px}.cin-hero-light{background:radial-gradient(ellipse 55% 35% at 65% 55%,rgba(227,115,48,.16),transparent 80%)}}
 @media(max-width:370px){.cin-likeminds{font-size:9px}.cin-brand small{font-size:7px}.cin-logo{width:35px;height:35px}}
 @media(prefers-reduced-motion:reduce){.cin-hero:before,.cin-hero-light,.cin-rec-dot,.cin-hero-content h1{animation:none!important;will-change:auto}}
+
+
+/* Dual-brand header: actual source logo and project-specific LikeMinds artwork */
+.cin-official-logo{width:56px;height:48px;display:grid;place-items:center;background:#efe6d2;border-radius:3px;overflow:hidden;flex:none}
+.cin-official-logo img{width:100%;height:100%;object-fit:contain}
+.cin-site-name{font-size:12px;font-weight:800;letter-spacing:.04em;line-height:1.2;white-space:nowrap}
+.cin-site-name small{display:block;font-size:9px;letter-spacing:.16em;margin-top:5px}
+.cin-likeminds-logo{height:45px;width:auto;max-width:83px;object-fit:contain;flex:none}
+@media(max-width:640px){.cin-official-logo{width:42px;height:40px}.cin-site-name{font-size:10px}.cin-site-name small{font-size:7px}.cin-likeminds-logo{height:39px;max-width:66px}.cin-brand-divider{margin:0 2px}.cin-brand{gap:7px}}
+@media(max-width:370px){.cin-site-name{font-size:9px}.cin-likeminds-logo{max-width:56px}.cin-official-logo{width:36px;height:36px}}
