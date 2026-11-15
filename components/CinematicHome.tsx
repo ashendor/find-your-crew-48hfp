@@ -15,11 +15,11 @@ const samples = [
   {name:'Nadia R.',role:'Actors',other:'Performer',image:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=560&q=80'},
 ];
 const backgrounds = {
-  hero:'https://unsplash.com/photos/Dw681UwPYOY/download?force=true&w=2000',
-  discover:'https://unsplash.com/photos/NAoSEZonwZY/download?force=true&w=1800',
-  how:'https://unsplash.com/photos/Eq_dtBylgoE/download?force=true&w=1800',
+  hero:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=2000&q=85',
+  discover:'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=1800&q=85',
+  how:'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1800&q=85',
   challenge:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=2000&q=85',
-  join:'https://unsplash.com/photos/nNrvHx9q_bs/download?force=true&w=1800',
+  join:'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1800&q=85',
 };
 function Icon({name,size=20}:{name:'search'|'plus'|'arrow'|'down'|'user'|'menu'|'close'|'heart'|'chevron'|'film'|'users'|'camera',size?:number}){
   const common={width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
@@ -34,7 +34,7 @@ export default function CinematicHome(){
   const [query,setQuery]=useState('');
   const root=useRef<HTMLDivElement>(null);
   const reduce=useReducedMotion();
-  const go=useCallback((index:number)=>{document.getElementById(sections[index])?.scrollIntoView({behavior:reduce?'instant':'smooth',block:'start'});setMenu(false)},[reduce]);
+  const go=useCallback((index:number)=>{document.getElementById(sections[index])?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});setMenu(false)},[reduce]);
   useEffect(()=>{const nodes=sections.map(id=>document.getElementById(id)).filter(Boolean) as HTMLElement[];const obs=new IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting&&e.intersectionRatio>.5){const i=sections.indexOf(e.target.id as typeof sections[number]);if(i>=0)setActive(i)}}},{root:root.current,threshold:[.5,.75]});nodes.forEach(n=>obs.observe(n));return()=>obs.disconnect()},[]);
   const filtered=samples.filter(p=>(role==='All'||p.role===role)&&(p.name+' '+p.role+' '+p.other).toLowerCase().includes(query.toLowerCase()));
   const enter={initial:reduce?false:{opacity:0,y:22},whileInView:{opacity:1,y:0},viewport:{once:false,amount:.35},transition:{duration:.65,ease:[.22,1,.36,1] as const}};
