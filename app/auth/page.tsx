@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCrewSupabase } from '@/lib/crew-supabase';
 import '../profile/creator.css';
+import './auth-modern.css';
 
 // Do not advertise Google sign-in until the Google Cloud OAuth application
 // and the Supabase Google provider have both been configured.
@@ -72,42 +73,45 @@ export default function AuthPage() {
     else setSent(true);
   }
 
-  return <main className="crew-page crew-auth-page"><div className="crew-shell">
-    <Link className="crew-back" href="/">← Find Your Crew</Link>
-    <div className="crew-auth-layout">
-      <div className="crew-auth-art"><p>LIKEMINDS PRESENTS</p><h1>Good films start with <em>great crews.</em></h1><span>48 HOUR FILM PROJECT · DUBAI</span></div>
-      <section className="crew-paper">
-        <p className="crew-eyebrow">JOIN THE CREATIVE COMMUNITY</p>
-        <h2>{sent ? 'Check your inbox.' : 'Find your people.'}</h2>
-        {sent ? <>
-          <p>We sent a secure sign-in link to <strong>{email}</strong>. Open it on this device to start your creator journey.</p>
-          <button type="button" className="crew-text-button" onClick={() => setSent(false)}>Use another email</button>
-        </> : <>
-          <p>One creative identity. A world of new collaborators.</p>
-          {googleEnabled && <div className="crew-oauth">
-            <button type="button" className="crew-google-button" onClick={() => void signInWithGoogle()} disabled={busy || !client}>
-              <GoogleMark/> <span>{busy ? 'Connecting…' : 'Continue with Google'}</span>
-            </button>
-            <p className="crew-oauth-note">Fast sign-in, without another password or verification email.</p>
-          </div>}
-          {googleEnabled && <div className="crew-auth-separator"><span>OR</span></div>}
-          {googleEnabled && !emailOpen && <button type="button" className="crew-email-toggle" onClick={() => setEmailOpen(true)}>
-            Continue with email instead
-          </button>}
-          {emailOpen && <form onSubmit={signInWithEmail}>
-            {!googleEnabled && <p>Sign in or create an account with your email. No password needed.</p>}
-            <label htmlFor="crew-email">Email address</label>
-            <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254}/>
-            <button className="crew-primary" type="submit" disabled={busy || !client}>
-              {busy ? 'Sending…' : 'Send me a sign-in link →'}
-            </button>
-            {googleEnabled && <small>Email sign-in uses Supabase's limited built-in email allowance.</small>}
-          </form>}
-          {error && <p className="crew-error" role="alert">{error}</p>}
-          {!client && <p className="crew-error" role="alert">Sign-in is not configured. The public Supabase environment variables are missing.</p>}
-          <p className="crew-oauth-disclaimer">Creating a Find Your Crew profile does not register you for the official film challenge.</p>
-        </>}
+  return <main className="crew-page crew-auth-page crew-auth-reimagined">
+    <div className="crew-auth-scene" aria-hidden="true"><div className="crew-auth-scene-image"/><div className="crew-auth-scene-wash"/><div className="crew-auth-scene-grid"/></div>
+    <header className="crew-auth-topbar"><Link href="/" className="crew-auth-brand">FIND YOUR CREW <span>BY LIKEMINDS · DUBAI 2026</span></Link><Link href="/" className="crew-auth-exit">BACK TO HOME <span>↗</span></Link></header>
+    <div className="crew-auth-body">
+      <section className="crew-auth-editorial" aria-label="Welcome">
+        <div className="crew-auth-edition"><span className="crew-auth-rec"/> THE CREATIVE CONNECTION / ISSUE 001</div>
+        <div><div className="crew-auth-slanted">GOOD FILMS</div><h1>AREN'T MADE <em>ALONE.</em></h1><p>Discover the people who make your next big idea possible.</p>
+          <div className="crew-auth-collage" aria-hidden="true"><span>◈ DIRECTORS</span><span>✳ CREATORS</span><span>◎ DREAMERS</span></div>
+        </div>
+        <div className="crew-auth-editorial-footer"><span>CREATE <i>✳</i> CONNECT <i>✳</i> COLLABORATE</span><span>48HFP / NOV 27—29</span></div>
+      </section>
+      <section className="crew-auth-glass" aria-label="Sign in to your crew">
+        <div className="crew-auth-panel-top"><span>✳ &nbsp; YOUR PASS TO THE CREW</span><span>001 / 001</span></div>
+        <div className="crew-auth-panel-main">
+          <div className="crew-auth-panel-stamp" aria-hidden="true">FYC<span>✳</span></div>
+          <p className="crew-auth-panel-eyebrow">WELCOME TO YOUR CREATIVE WORLD</p>
+          <h2>{sent ? 'Check your inbox.' : <>Enter the<br/><em>crew.</em></>}</h2>
+          {sent ? <>
+            <p className="crew-auth-message">We sent a secure sign-in link to <strong>{email}</strong>. Open it to join your creative space.</p>
+            <button type="button" className="crew-auth-back-email" onClick={()=>setSent(false)}>← Use another email</button>
+          </> : <>
+            <p className="crew-auth-message">One tap and you're in. No passwords. Just possibility.</p>
+            {googleEnabled&&<button type="button" className="crew-auth-google" disabled={busy||!client} onClick={()=>void signInWithGoogle()}>
+              <GoogleMark/><span>{busy?'Opening Google…':'Continue with Google'}</span><span className="crew-auth-google-arrow" aria-hidden="true">↗</span>
+            </button>}
+            {googleEnabled&&!emailOpen&&<button type="button" className="crew-auth-email-link" onClick={()=>setEmailOpen(true)}>Prefer email? Use a sign-in link <span>↗</span></button>}
+            {emailOpen&&<form className="crew-auth-email-form" onSubmit={signInWithEmail}>
+              <label htmlFor="crew-email">YOUR EMAIL</label>
+              <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
+              <button type="submit" disabled={busy||!client}>{busy?'Sending…':'Send sign-in link ↗'}</button>
+              {googleEnabled&&<button type="button" className="crew-auth-back-email" onClick={()=>setEmailOpen(false)}>← Back to Google sign-in</button>}
+            </form>}
+            {error&&<p className="crew-auth-error" role="alert">{error}</p>}
+            {!client&&<p className="crew-auth-error" role="alert">Sign-in is unavailable. Please try again later.</p>}
+          </>}
+        </div>
+        <footer className="crew-auth-panel-footer"><span>INDEPENDENT FILM. UNLIMITED CONNECTIONS.</span><p>Creating a profile doesn't register you for the official film challenge.</p></footer>
       </section>
     </div>
-  </div></main>;
+    <div className="crew-auth-corner-code" aria-hidden="true">LIKEMINDS PRESENTS / 48 HOUR FILM PROJECT DUBAI</div>
+  </main>;
 }
