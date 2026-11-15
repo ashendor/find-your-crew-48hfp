@@ -5,6 +5,7 @@ import {usePathname} from 'next/navigation';
 import SignOutButton from '@/components/SignOutButton';
 import CrewInboxDrawer from '@/components/CrewInboxDrawer';
 import {getCrewSupabase} from '@/lib/crew-supabase';
+import '@/app/dashboard-modern.css';
 type InboxTab='chats'|'requests'|'invites';
 
 export default function CrewNav({userName}:{userName?:string}){
