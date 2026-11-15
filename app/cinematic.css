@@ -79,3 +79,41 @@ html{scroll-behavior:smooth}.cinematic{--cream:#efe6d2;--red:#b4442e;--gold:#d9a
 @media(max-width:1100px){.cin-header-nav{gap:16px}.cin-header{padding-left:26px;padding-right:26px}.cin-brand{gap:7px}.cin-likeminds-logo{max-width:92px;height:46px}.cin-site-name{font-size:9px}}
 @media(max-width:640px){.cin-likeminds-logo{max-width:80px;height:43px}.cin-official-logo{width:38px;height:38px}.cin-site-name{font-size:8px;max-width:85px;white-space:normal}.cin-site-name small{font-size:7px}.cin-brand-divider{height:27px}.cin-brand{gap:5px}.cin-hero-content .cin-description{max-width:330px}}
 @media(max-width:360px){.cin-likeminds-logo{max-width:67px}.cin-official-logo{width:32px;height:32px}.cin-site-name{max-width:72px;font-size:7px}}
+
+
+/* Final visual pass: verified behind-the-scenes photography, legible hierarchy, lighter texture. */
+.cin-panel:after{opacity:.035}
+.cin-hero:before{background-position:67% center;filter:saturate(.93) contrast(1.08) brightness(.92)}
+.cin-hero .cin-panel-shade{background:linear-gradient(90deg,#100e0cf5 0%,#100e0ce8 28%,#100e0c9c 48%,#100e0c17 78%),linear-gradient(0deg,#100e0c82,transparent 58%)}
+.cin-filmset-grain{opacity:.035}
+.cin-filmset-beam{opacity:.18;filter:blur(28px)}
+.cin-filmset-beam-two{opacity:.12}
+.cin-filmset-haze{opacity:.2}
+.cin-hero-playing .cin-filmset-beam-one{animation:cin-beam-one 6s ease-in-out infinite alternate}
+.cin-hero-playing .cin-filmset-beam-two{animation:cin-beam-two 8s ease-in-out infinite alternate}
+.cin-hero-playing .cin-filmset-haze{animation:cin-haze 7s ease-in-out infinite alternate}
+.cin-hero-playing:before{animation:cin-filmset-camera 13s ease-in-out infinite alternate}
+.cin-hero-content{max-width:1250px}
+.cin-hero-content h1{max-width:740px;text-shadow:0 3px 24px #100e0c80}
+.cin-hero-content .cin-description{max-width:480px;font-size:clamp(17px,1.4vw,21px);line-height:1.5}
+.cin-discover .cin-panel-shade{background:linear-gradient(90deg,#151311f7,#151311df),linear-gradient(0deg,#151311e6,#15131180)}
+.cin-how .cin-panel-shade{background:linear-gradient(90deg,#171411ef,#171411d0 62%,#17141165)}
+.cin-how .cin-step{background:#171411a8;border:1px solid #efe6d233;border-top:2px solid #d9a53f;transition:transform .25s,background .25s}
+.cin-how .cin-step:hover{transform:translateY(-5px);background:#171411df}
+.cin-challenge .cin-panel-shade{background:linear-gradient(90deg,#171411ed,#171411b0 58%,#17141145)}
+.cin-panel h1 em,.cin-panel h2 em{text-decoration-thickness:4px;text-underline-offset:9px}
+@media(max-width:640px){
+ .cin-hero:before{background-position:62% center;filter:saturate(.9) brightness(.85)}
+ .cin-hero .cin-panel-shade{background:linear-gradient(180deg,#100e0c9c 0%,#100e0c72 22%,#100e0cd6 52%,#100e0cf5 100%)}
+ .cin-hero-content{padding-top:clamp(145px,28svh,245px);padding-bottom:85px;align-self:end}
+ .cin-hero-content h1{font-size:clamp(45px,12vw,65px)}
+ .cin-hero-content .cin-description{font-size:14px;line-height:1.5;max-width:320px}
+ .cin-hero .cin-overline{font-size:9px}
+ .cin-hero .cin-buttons{margin-top:20px}
+ .cin-hero .cin-button{min-height:46px}
+ .cin-filmset-beam{opacity:.12}
+ .cin-filmset-haze{opacity:.15}
+ .cin-how .cin-step:hover{transform:none}
+}
+@media(max-height:680px) and (max-width:640px){.cin-hero-content{padding-top:80px;padding-bottom:62px}.cin-hero-content h1{font-size:43px}.cin-hero-content .cin-description{margin-top:12px}.cin-hero .cin-buttons{margin-top:13px}}
+@media(prefers-reduced-motion:reduce){.cin-hero-playing:before,.cin-hero-playing .cin-filmset-beam,.cin-hero-playing .cin-filmset-haze{animation:none!important}}
