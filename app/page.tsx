@@ -1,6 +1,6 @@
-import CinematicHome from '@/components/CinematicHome';
-import './cinematic.css';
+import BrandHome from '@/components/BrandHome';
+import './brand-home.css';
 
 export default function Home() {
-  return <CinematicHome />;
+  return <BrandHome />;
 }

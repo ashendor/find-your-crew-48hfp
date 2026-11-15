@@ -8,6 +8,7 @@ import '../crew-app.css';
 import '../two-pillar.css';
 import '../dashboard-modern.css';
 import '../dashboard-clean.css';
+import '../brand-skin.css';
 
 type RecentMessage={connection_id:string;sender_id:string;body:string;created_at:string};
 type LatestChat={name:string;role:string;body:string;created_at:string};

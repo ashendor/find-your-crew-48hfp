@@ -6,6 +6,7 @@ import SignOutButton from '@/components/SignOutButton';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
 import {INTENTS,ROLES,type Creator} from '@/lib/crew-types';
 import '../crew-app.css';
+import '../brand-skin.css';
 const steps=['Identity','Your craft','Your mission','Your story','Availability'];
 const initial={username:'',display_name:'',avatar_url:'',primary_role:'',categories:[] as string[],intent:'both' as 'join'|'build'|'both',experience:'emerging',headline:'',bio:'',location:'Dubai',portfolio_url:'',available_for_collaboration:true,available_for_48hfp:true};
 export default function Onboarding(){
@@ -13,7 +14,7 @@ export default function Onboarding(){
  const [step,setStep]=useState(0),[form,setForm]=useState(initial),[busy,setBusy]=useState(false),[error,setError]=useState(''),[reveal,setReveal]=useState(false);
  useEffect(()=>{if(!client){setLoading(false);return}let mounted=true;(async()=>{const {data:{user}}=await client.auth.getUser();if(!mounted)return;if(!user){router.replace('/auth');return}setUserId(user.id);
  const {data}=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(!mounted)return;
- if(data?.onboarding_complete){router.replace('/dashboard');return}
+ if(data?.onboarding_complete){router.replace('/home');return}
  if(data){const p=data as Creator;setForm(v=>({...v,username:p.username||v.username,display_name:p.display_name||'',avatar_url:p.avatar_url||'',primary_role:p.primary_role||'',categories:p.categories||[],intent:p.intent||'both',experience:p.experience||'emerging',headline:p.headline||'',bio:p.bio||'',location:p.location||'Dubai',portfolio_url:p.portfolio_url||'',available_for_collaboration:p.available_for_collaboration||false,available_for_48hfp:!!p.available_for_48hfp}))}
  setLoading(false)})();return()=>{mounted=false}},[client,router]);
  function set<K extends keyof typeof initial>(key:K,value:(typeof initial)[K]){setForm(v=>({...v,[key]:value}));setError('')}
@@ -25,7 +26,7 @@ export default function Onboarding(){
  if(!client||!userId)return;setBusy(true);
  const data={id:userId,username:form.username.trim().toLowerCase(),display_name:form.display_name.trim().slice(0,80),avatar_url:form.avatar_url||null,primary_role:form.primary_role,categories:Array.from(new Set([form.primary_role,...form.categories])),intent:form.intent,experience:form.experience,headline:form.headline.trim().slice(0,120),bio:form.bio.trim().slice(0,600),location:form.location.trim().slice(0,80),portfolio_url:form.portfolio_url.trim().slice(0,300)||null,available_for_collaboration:form.available_for_collaboration,available_for_48hfp:form.available_for_48hfp,onboarding_complete:true,updated_at:new Date().toISOString()};
  const {error:saveError}=await client.from('profiles').upsert(data,{onConflict:'id'});setBusy(false);if(saveError){setError(saveError.code==='23505'?'That username is taken. Choose another.':saveError.message);return}
- setReveal(true);window.setTimeout(()=>router.replace('/dashboard'),1800)
+ setReveal(true);window.setTimeout(()=>router.replace('/home'),1800)
  }
  if(loading)return <main className="fc-app"><div className="fc-main">Preparing your creative space…</div></main>;
  if(!client)return <main className="fc-app"><div className="fc-main">Sign-in configuration is missing. <Link href="/auth">Return to sign-in</Link></div></main>;

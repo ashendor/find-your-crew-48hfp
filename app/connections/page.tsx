@@ -5,6 +5,7 @@ import CrewNav from '@/components/CrewNav';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Connection,Creator} from '@/lib/crew-types';
 import '../crew-app.css';
+import '../brand-skin.css';
 type Message={id:string;connection_id:string;sender_id:string;body:string;created_at:string};
 export default function Connections(){
  const {client,user,userId,loading}=useCrewUser();
