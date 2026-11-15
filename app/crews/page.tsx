@@ -28,7 +28,7 @@ export default function Crews(){
  const {error:e2}=await client.from('crew_members').update({status}).eq('id',id).eq('user_id',userId);
  setBusy(false);if(e2)setError(e2.message);else{setNotice(status==='accepted'?'You joined the crew!':'Invitation declined.');void refresh()}}
  if(loading||!user)return <main className="fc-app"><div className="fc-main">Loading your crews…</div></main>;
- return <main className="fc-app"><CrewNav userName={user.display_name}/><div className="fc-main">
+ return <main className="fc-app fc-app--cinematic fc-workspace-page"><CrewNav userName={user.display_name}/><div className="fc-main">
   <p className="fc-eyebrow">THE FILM IS BETTER TOGETHER</p><h1 className="fc-display">My <em>Crews.</em></h1><p className="fc-lead">Every creator can build a crew or join one. Start with a name, then invite the people who make your vision possible.</p>
   {error&&<p className="fc-error" role="alert">{error}</p>}{notice&&<p className="fc-notice" role="status">{notice}</p>}
   <div className="fc-two-col" style={{marginTop:36}}>

@@ -49,7 +49,7 @@ export default function Discover(){
  function moveTouch(e:TouchEvent){if(touchX!==null)setDrag(e.touches[0].clientX-touchX)}
  function endTouch(){if(!active)return;if(drag>80)void act(active,'connect');else if(drag< -80)void act(active,'pass');setDrag(0);setTouchX(null)}
  if(loading||!user)return <main className="fc-app"><div className="fc-main">{userError||'Opening Discover…'}</div></main>;
- return <main className="fc-app"><CrewNav userName={user.display_name}/><div className="fc-main">
+ return <main className="fc-app fc-app--cinematic fc-workspace-page"><CrewNav userName={user.display_name}/><div className="fc-main">
   <p className="fc-eyebrow">DISCOVER / CREATIVE CONNECTIONS</p><h1 className="fc-display">Find your <em>people.</em></h1><p className="fc-lead">Every card is a real creator. Swipe to connect, invite someone to your crew, or keep exploring.</p>
   <div className="fc-filters"><div className="fc-toggle" aria-label="Discovery display"><button type="button" className={mode==='swipe'?'active':''} onClick={()=>setMode('swipe')}>▧ Swipe mode</button><button type="button" className={mode==='grid'?'active':''} onClick={()=>setMode('grid')}>▦ Explore grid</button></div>
    <input className="fc-filter-input" aria-label="Search creators" placeholder="Search creative people…" value={search} onChange={e=>setSearch(e.target.value)}/>
