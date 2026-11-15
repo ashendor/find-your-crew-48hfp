@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+/* Clean dashboard: one purpose per section, no redundant activity panels. */
+.fc-dashboard-clean{background:#171411;color:#f4ebdd;font-family:'DM Sans',Arial,sans-serif;min-height:100svh}
+.fc-dashboard-clean .fc-v2-stage,.fc-dashboard-clean .fc-v2-shell{display:none}
+.fc-dashboard-clean .fd-workspace{min-height:calc(100svh - 72px);background:radial-gradient(ellipse at 95% 0,#7e4c2e1c,transparent 42%),#171411}
+.fc-dashboard-clean .fd-inner{max-width:1320px;padding:36px clamp(22px,4vw,58px) 28px;margin:0 auto}
+.fc-dashboard-clean .fd-welcome{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:31px}
+.fc-dashboard-clean .fd-eyebrow{font-size:10px;color:#d8ad72;font-weight:800;letter-spacing:.18em}
+.fc-dashboard-clean .fd-intro h1{font:700 clamp(30px,3.8vw,50px)/1.15 'Playfair Display',Georgia,serif;letter-spacing:-.035em;margin:7px 0 5px}
+.fc-dashboard-clean .fd-spark{color:#c58b50}
+.fc-dashboard-clean .fd-intro p{color:#c9baa9;font-size:13px;line-height:1.6}
+.fc-dashboard-clean .fd-inbox-shortcut{display:flex;align-items:center;gap:10px;padding:13px 17px;color:#ebd5b6;background:#272018;border:1px solid #72583f;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;transition:background .2s,border-color .2s}
+.fc-dashboard-clean .fd-inbox-shortcut svg:last-child{width:16px}
+.fc-dashboard-clean .fd-inbox-shortcut:hover{background:#3b2c20;border-color:#c19665}
+.fc-dashboard-clean .fd-inbox-shortcut.has-pending{border-color:#c06449;background:#3d231a;color:#ffe5c9}
+.fc-dashboard-clean .fd-grid{display:grid;grid-template-columns:minmax(0,1.78fr) minmax(280px,.92fr);gap:24px;align-items:start}
+.fc-dashboard-clean .fd-main{display:flex;flex-direction:column;gap:25px;min-width:0}
+.fc-dashboard-clean .fd-section-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:13px}
+.fc-dashboard-clean .fd-section-heading h2{font:700 clamp(22px,2vw,28px)/1.25 'Playfair Display',Georgia,serif;margin:5px 0 0;letter-spacing:-.02em}
+.fc-dashboard-clean .fd-quiet-label{font-size:11px;color:#aa967e;padding-bottom:4px}
+.fc-dashboard-clean .fd-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fc-dashboard-clean .fd-action{display:flex;align-items:center;gap:15px;min-height:139px;border:1px solid #74573b;background:linear-gradient(125deg,#30231b,#211a16);border-radius:12px;padding:20px;color:#f7ead7!important;text-decoration:none!important;transition:border-color .25s,transform .25s,background .25s}
+.fc-dashboard-clean .fd-action-primary{border-color:#bd8250;background:linear-gradient(130deg,#563324,#30211a)}
+.fc-dashboard-clean .fd-action:hover{border-color:#e0ab75;transform:translateY(-3px)}
+.fc-dashboard-clean .fd-action-icon{height:44px;width:44px;border-radius:10px;display:grid;place-items:center;background:#a76c3e38;color:#efc08b;flex-shrink:0}
+.fc-dashboard-clean .fd-action-primary .fd-action-icon{background:#c48750;color:#20160e}
+.fc-dashboard-clean .fd-action-icon svg{height:25px;width:25px}
+.fc-dashboard-clean .fd-action-content{display:flex;flex-direction:column;gap:7px;flex:1;min-width:0}
+.fc-dashboard-clean .fd-action-content strong{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.fc-dashboard-clean .fd-action-content small{font-size:11px;line-height:1.5;color:#cdb8a2;max-width:190px;font-weight:500}
+.fc-dashboard-clean .fd-action-arrow{align-self:flex-end;color:#dfad79;display:grid;place-items:center}
+.fc-dashboard-clean .fd-activity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fc-dashboard-clean .fd-activity{display:grid;grid-template-columns:1fr auto;grid-template-rows:27px auto auto;align-items:center;text-align:left;min-height:113px;padding:14px 16px;border:1px solid #534234;background:#251e19;border-radius:9px;color:#f6e8d4;transition:background .2s,border-color .2s}
+.fc-dashboard-clean .fd-activity:hover{background:#36291f;border-color:#b58655}
+.fc-dashboard-clean .fd-activity.needs-attention{border-color:#c66d50;background:#38241c}
+.fc-dashboard-clean .fd-activity-icon{color:#d6a875}
+.fc-dashboard-clean .fd-activity>strong{grid-column:1;grid-row:2;font-size:26px;color:#f2d3a4;line-height:1.25}
+.fc-dashboard-clean .fd-activity>span:nth-last-child(2){grid-column:1;grid-row:3;font-size:11px;color:#cbb9a5;font-weight:600}
+.fc-dashboard-clean .fd-activity>svg:last-child{grid-column:2;grid-row:2 / span 2;width:16px;color:#b88c61}
+.fc-dashboard-clean .fd-text-action{background:none;border:0;color:#e0b47b;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.fc-dashboard-clean .fd-text-action svg{width:16px}
+.fc-dashboard-clean .fd-chat-row{width:100%;display:flex;align-items:center;gap:14px;padding:15px 18px;border:1px solid #594635;border-radius:9px;background:#251e18;color:#f3e7d5;text-align:left;transition:border-color .2s}
+.fc-dashboard-clean .fd-chat-row:hover{border-color:#b48a5d}
+.fc-dashboard-clean .fd-chat-avatar{height:42px;width:42px;display:grid;place-items:center;background:#7b4e32;border:1px solid #bd9367;border-radius:50%;font:700 21px Georgia,serif;flex-shrink:0}
+.fc-dashboard-clean .fd-chat-copy{display:flex;flex-direction:column;gap:6px;overflow:hidden;flex:1}
+.fc-dashboard-clean .fd-chat-copy strong{font-size:12px}
+.fc-dashboard-clean .fd-chat-copy strong span{color:#bca38b;font-weight:500}
+.fc-dashboard-clean .fd-chat-copy small{font-size:12px;color:#c1ac94;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.fc-dashboard-clean .fd-chat-row time{font-size:10px;color:#bb956e;white-space:nowrap}
+.fc-dashboard-clean .fd-chat-row svg:last-child{width:17px;color:#d4a46c}
+.fc-dashboard-clean .fd-empty-chat{border:1px solid #594635;background:#251e18;padding:18px;border-radius:9px;font-size:12px;color:#cebca8;display:flex;justify-content:space-between;gap:16px;align-items:center}
+.fc-dashboard-clean .fd-empty-chat a{display:flex;align-items:center;gap:7px;white-space:nowrap;font-weight:700;color:#ebbb82!important}
+.fc-dashboard-clean .fd-empty-chat a svg{width:16px}
+.fc-dashboard-clean .fd-side{min-width:0;display:flex;flex-direction:column;gap:13px}
+.fc-dashboard-clean .fd-profile-card{border:1px solid #8b6543;border-radius:13px;background:linear-gradient(145deg,#38261c,#261c17);padding:21px;position:sticky;top:20px;box-shadow:0 12px 30px #0002}
+.fc-dashboard-clean .fd-profile-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.fc-dashboard-clean .fd-profile-tag{color:#9d8874;font-size:9px;font-weight:800;letter-spacing:.07em}
+.fc-dashboard-clean .fd-profile-person{display:flex;align-items:center;gap:16px;margin:22px 0}
+.fc-dashboard-clean .fd-profile-avatar{width:80px;height:80px;flex:0 0 80px;background:#795336 center/cover;border:2px solid #c59a68;border-radius:10px;display:grid;place-items:center;font:700 35px Georgia,serif}
+.fc-dashboard-clean .fd-profile-name{min-width:0}
+.fc-dashboard-clean .fd-profile-name h2{font:700 clamp(20px,2vw,29px)/1.2 'Playfair Display',Georgia,serif;overflow-wrap:anywhere}
+.fc-dashboard-clean .fd-profile-name p{font-size:11px;color:#d0bba4;margin:6px 0}
+.fc-dashboard-clean .fd-availability{font-size:10px;color:#b6d99e;display:inline-flex;align-items:center;gap:6px}
+.fc-dashboard-clean .fd-availability i{width:7px;height:7px;border-radius:50%;background:#a7ca8d}
+.fc-dashboard-clean .fd-profile-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fc-dashboard-clean .fd-profile-buttons a{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;font-size:11px;font-weight:800;border:1px solid #c1915d;border-radius:7px;color:#f5dfc3!important;text-decoration:none!important}
+.fc-dashboard-clean .fd-profile-buttons a:last-child{background:#bd8653;color:#20160f!important}
+.fc-dashboard-clean .fd-profile-buttons svg{width:15px}
+.fc-dashboard-clean .fd-profile-buttons a:hover{filter:brightness(1.15)}
+.fc-dashboard-clean .fd-tip{padding:17px 20px;border:1px solid #4b3b2e;border-radius:10px;background:#211a16}
+.fc-dashboard-clean .fd-tip p{font-size:11px;color:#baa38c;line-height:1.6;margin:9px 0 13px}
+.fc-dashboard-clean .fd-tip a{display:flex;align-items:center;gap:8px;color:#dfaf78!important;font-size:11px;font-weight:800}
+.fc-dashboard-clean .fd-tip svg{width:15px}
+.fc-dashboard-clean .fd-footer{display:flex;justify-content:space-between;gap:10px;font-size:9px;font-weight:800;letter-spacing:.13em;color:#776656;margin-top:35px}
+@media(max-width:1000px){.fc-dashboard-clean .fd-grid{grid-template-columns:minmax(0,1fr) 260px;gap:15px}.fc-dashboard-clean .fd-action{gap:10px;padding:15px}.fc-dashboard-clean .fd-profile-card{padding:16px}.fc-dashboard-clean .fd-profile-person{gap:10px}.fc-dashboard-clean .fd-profile-avatar{width:61px;height:68px;flex-basis:61px}}
+@media(max-width:780px){.fc-dashboard-clean .fd-grid{grid-template-columns:1fr}.fc-dashboard-clean .fd-side{display:grid;grid-template-columns:minmax(0,1fr)}.fc-dashboard-clean .fd-profile-card{position:static}.fc-dashboard-clean .fd-tip{display:none}.fc-dashboard-clean .fd-inner{padding-top:23px}.fc-dashboard-clean .fd-main{gap:23px}}
+@media(max-width:590px){
+ .fc-dashboard-clean .fc-nav--studio{padding:11px 17px 9px!important;min-height:65px;gap:6px 10px}
+ .fc-dashboard-clean .fc-nav--studio .fc-wordmark{font-size:13px;letter-spacing:.04em}
+ .fc-dashboard-clean .fc-nav--studio .fc-wordmark span{font-size:7px}
+ .fc-dashboard-clean .fc-nav--studio nav{margin:0;padding:5px 0 2px;gap:24px;justify-content:flex-start}
+ .fc-dashboard-clean .fc-nav--studio nav a{font-size:11px}
+ .fc-dashboard-clean .fc-two-nav-actions{gap:5px;margin-left:auto}
+ .fc-dashboard-clean .fc-alert-trigger,.fc-dashboard-clean .fc-chat-trigger-v2{width:33px;height:33px}
+ .fc-dashboard-clean .fc-alert-trigger svg,.fc-dashboard-clean .fc-chat-trigger-v2 svg{width:19px}
+ .fc-dashboard-clean .fc-account-avatar{width:32px;height:32px}
+ .fc-dashboard-clean .fc-account-name{display:none}
+ .fc-dashboard-clean .fd-inner{padding:21px 16px 28px}
+ .fc-dashboard-clean .fd-welcome{margin-bottom:23px;gap:10px;align-items:flex-start}
+ .fc-dashboard-clean .fd-intro h1{font-size:30px;margin:5px 0}
+ .fc-dashboard-clean .fd-intro p{font-size:11px;max-width:220px}
+ .fc-dashboard-clean .fd-eyebrow{font-size:9px;letter-spacing:.13em}
+ .fc-dashboard-clean .fd-inbox-shortcut{padding:10px;min-width:42px;min-height:42px;justify-content:center;border-radius:50%}
+ .fc-dashboard-clean .fd-inbox-shortcut span,.fc-dashboard-clean .fd-inbox-shortcut svg:last-child{display:none}
+ .fc-dashboard-clean .fd-section-heading{margin-bottom:11px}
+ .fc-dashboard-clean .fd-section-heading h2{font-size:22px}
+ .fc-dashboard-clean .fd-actions{grid-template-columns:1fr;gap:10px}
+ .fc-dashboard-clean .fd-action{min-height:95px;padding:15px 16px}
+ .fc-dashboard-clean .fd-action-icon{width:42px;height:42px}
+ .fc-dashboard-clean .fd-action-content strong{font-size:15px}
+ .fc-dashboard-clean .fd-action-content small{font-size:11px;max-width:none}
+ .fc-dashboard-clean .fd-main{gap:22px}
+ .fc-dashboard-clean .fd-activity-grid{gap:7px}
+ .fc-dashboard-clean .fd-activity{min-height:90px;padding:10px 9px}
+ .fc-dashboard-clean .fd-activity-icon svg{width:17px}
+ .fc-dashboard-clean .fd-activity strong{font-size:23px}
+ .fc-dashboard-clean .fd-activity>span:nth-last-child(2){font-size:9px}
+ .fc-dashboard-clean .fd-quiet-label{font-size:9px}
+ .fc-dashboard-clean .fd-chat-row{padding:11px;gap:9px}
+ .fc-dashboard-clean .fd-chat-avatar{height:35px;width:35px}
+ .fc-dashboard-clean .fd-chat-row time{font-size:9px}
+ .fc-dashboard-clean .fd-chat-row svg:last-child{display:none}
+ .fc-dashboard-clean .fd-empty-chat{display:block}
+ .fc-dashboard-clean .fd-empty-chat a{margin-top:8px}
+ .fc-dashboard-clean .fd-profile-card{padding:17px}
+ .fc-dashboard-clean .fd-profile-person{margin:17px 0}
+ .fc-dashboard-clean .fd-profile-avatar{width:64px;height:69px;flex-basis:64px}
+ .fc-dashboard-clean .fd-profile-name h2{font-size:25px}
+ .fc-dashboard-clean .fd-footer{margin-top:23px}
+}
+@media(prefers-reduced-motion:reduce){.fc-dashboard-clean .fd-action,.fc-dashboard-clean .fd-activity,.fc-dashboard-clean .fd-chat-row{transition:none}}
