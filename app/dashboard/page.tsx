@@ -1,5 +1,5 @@
 'use client';
-import {type PointerEvent as ReactPointerEvent,type WheelEvent as ReactWheelEvent,useCallback,useEffect,useRef,useState} from 'react';
+import {type PointerEvent as ReactPointerEvent,type WheelEvent as ReactWheelEvent,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {useCrewUser} from '@/lib/use-crew';
 import CrewNav from '@/components/CrewNav';
@@ -21,6 +21,11 @@ export default function Dashboard(){
  const [scale,setScale]=useState(1),[pan,setPan]=useState<Pan>({x:0,y:0}),[dragging,setDragging]=useState(false);
  const pointer=useRef<{id:number;startX:number;startY:number;x:number;y:number}|null>(null);
  const stage=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  // The canvas is still freely pannable on mobile; begin with the main Discover card in view.
+  if(window.innerWidth<=540){setScale(.70);setPan({x:105,y:70})}
+  else if(window.innerWidth<=800){setScale(.85);setPan({x:50,y:30})}
+ },[]);
  useEffect(()=>{if(!client||!userId)return;let alive=true;(async()=>{
   const [a,b,c,d]=await Promise.all([
    client.from('crews').select('id',{count:'exact',head:true}).eq('owner_id',userId),
@@ -30,7 +35,6 @@ export default function Dashboard(){
   ]);
   if(alive){setCrews(a.count||0);setInvites(b.count||0);setRequests(c.count||0);setAccepted(d.count||0)}
  })();return()=>{alive=false}},[client,userId]);
- const zoom=useCallback((next:number)=>setScale(s=>clamp(typeof next==='number'?next:s,.55,1.85)),[]);
  function pointerDown(e:ReactPointerEvent<HTMLDivElement>){
   if(e.button!==0||!(e.target instanceof Element)||e.target.closest('a,button,input,summary'))return;
   pointer.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,x:pan.x,y:pan.y};
