@@ -37,3 +37,31 @@ html{scroll-behavior:smooth}.cinematic{--cream:#efe6d2;--red:#b4442e;--gold:#d9a
 .cin-likeminds-logo{height:45px;width:auto;max-width:83px;object-fit:contain;flex:none}
 @media(max-width:640px){.cin-official-logo{width:42px;height:40px}.cin-site-name{font-size:10px}.cin-site-name small{font-size:7px}.cin-likeminds-logo{height:39px;max-width:66px}.cin-brand-divider{margin:0 2px}.cin-brand{gap:7px}}
 @media(max-width:370px){.cin-site-name{font-size:9px}.cin-likeminds-logo{max-width:56px}.cin-official-logo{width:36px;height:36px}}
+
+
+/* Option 2 — visibly moving, lightweight film-set atmosphere.
+   Transform/opacity animation only; paused when offscreen; no autoplay video or JS animation loop. */
+.cin-hero{background:#100e0c}
+.cin-hero:before{background-position:65% center;filter:saturate(.85) sepia(.2) brightness(.75);animation:none;transform:scale(1.03)}
+.cin-hero-playing:before{animation:cin-filmset-camera 16s ease-in-out infinite alternate}
+.cin-hero .cin-panel-shade{background:linear-gradient(90deg,rgba(10,9,8,.96) 0%,rgba(10,9,8,.82) 37%,rgba(10,9,8,.22) 85%),linear-gradient(0deg,#171411a0,transparent 65%)}
+.cin-filmset-motion{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;contain:paint}
+.cin-filmset-beam{position:absolute;width:90vw;height:35vw;min-height:230px;right:-20vw;top:-10%;opacity:.5;transform-origin:95% 0%;clip-path:polygon(100% 0,100% 10%,0 100%,20% 45%);background:linear-gradient(180deg,rgba(255,179,78,.37),rgba(255,155,52,.05) 70%,transparent);filter:blur(16px);mix-blend-mode:screen}
+.cin-filmset-beam-two{top:20%;right:-27vw;opacity:.26;transform:rotate(-20deg);background:linear-gradient(180deg,rgba(255,217,147,.45),transparent)}
+.cin-hero-playing .cin-filmset-beam-one{animation:cin-beam-one 8s ease-in-out infinite alternate}
+.cin-hero-playing .cin-filmset-beam-two{animation:cin-beam-two 11s ease-in-out infinite alternate}
+.cin-filmset-haze{position:absolute;inset:-20%;background:radial-gradient(ellipse 38% 32% at 79% 48%,rgba(231,122,39,.33),transparent 90%),radial-gradient(ellipse 27% 23% at 58% 75%,rgba(195,85,39,.21),transparent 85%);mix-blend-mode:screen;opacity:.5}
+.cin-hero-playing .cin-filmset-haze{animation:cin-haze 9s ease-in-out infinite alternate}
+.cin-filmset-flares{position:absolute;inset:0;background:radial-gradient(circle at 86% 24%,rgba(255,198,110,.52) 0,rgba(255,198,110,.1) 2%,transparent 14%),radial-gradient(circle at 75% 63%,rgba(240,117,47,.19),transparent 28%);opacity:.45}
+.cin-hero-playing .cin-filmset-flares{animation:cin-flares 5s ease-in-out infinite alternate}
+.cin-filmset-grain{position:absolute;inset:0;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.cin-hero-content{position:relative;z-index:2}
+.cin-hero-frame{z-index:2}
+.cin-hero-content h1{animation:none}
+@keyframes cin-filmset-camera{0%{transform:scale(1.04) translate3d(-1%,0,0)}100%{transform:scale(1.18) translate3d(1.5%,-1%,0)}}
+@keyframes cin-beam-one{0%{transform:rotate(-10deg) translate3d(-3%,0,0);opacity:.25}100%{transform:rotate(7deg) translate3d(4%,3%,0);opacity:.7}}
+@keyframes cin-beam-two{0%{transform:rotate(-23deg);opacity:.14}100%{transform:rotate(-5deg);opacity:.48}}
+@keyframes cin-haze{0%{transform:translate3d(-5%,1%,0) scale(.95);opacity:.25}100%{transform:translate3d(6%,-3%,0) scale(1.13);opacity:.75}}
+@keyframes cin-flares{0%{opacity:.2}100%{opacity:.8}}
+@media(max-width:640px){.cin-hero:before{background-position:64% center}.cin-hero .cin-panel-shade{background:linear-gradient(90deg,#100e0cf2,#100e0c9e 66%,#100e0c72),linear-gradient(0deg,#100e0cb3,transparent 70%)}.cin-filmset-beam{width:150vw;height:100vw;right:-75vw;top:12%;filter:blur(12px)}.cin-filmset-beam-two{top:38%;right:-85vw}.cin-filmset-haze{inset:-15%}.cin-filmset-flares{background:radial-gradient(circle at 90% 30%,rgba(255,198,110,.38),transparent 28%)}}
+@media(prefers-reduced-motion:reduce){.cin-hero-playing:before,.cin-hero-playing .cin-filmset-beam,.cin-hero-playing .cin-filmset-haze,.cin-hero-playing .cin-filmset-flares{animation:none!important}.cin-filmset-beam{opacity:.25}.cin-filmset-haze{opacity:.3}}
