@@ -41,7 +41,7 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,rec
     const {data:{user}} = await client.auth.getUser();
     if (!user) { setError('Sign in to connect.'); return; }
     if (purpose === 'project' && !projectId) { setError('Choose a project.'); return; }
-    if (needsTeam && !crewId && teamName.trim().length < 2) { setError('This project needs a team name, or an existing crew.'); return; }
+    if (needsTeam && !crewId && teamName.trim().length < 2) { setError('This project needs a team name, or a team you already have.'); return; }
     setBusy(true); setError('');
     const chosen = crews.find(c => c.id === crewId);
     const {error:insertError} = await client.from('connections').insert({
@@ -70,41 +70,40 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,rec
         {recipientAvatar ? <img src={recipientAvatar} alt="" /> : <span>{recipientName.slice(0,1)}</span>}
         <p><span>You're connecting with</span><strong>{recipientName}</strong></p>
       </div>
-      <label className="lm-purpose-native">Why are you connecting?
-          <select value={purpose} onChange={e => setPurpose(e.target.value as typeof purpose)}>
-            <option value="network">Just connect / Network</option>
+      <label className="lm-purpose-native">Why would you like to connect?
+          <select value={purpose} onChange={e => { setPurpose(e.target.value as typeof purpose); if (e.target.value !== 'project') setProjectId(''); }}>
+            <option value="network">Just connect</option>
             <option value="project">Collaborate on a project</option>
-            <option value="crew">Join or build a crew</option>
+            <option value="crew">Build / join a team</option>
           </select>
         </label>
         <div className="lm-desk lm-purpose-web">
-          <p>Purpose of connecting</p>
-          <button type="button" className={purpose === 'project' && !projectId ? 'on' : ''} onClick={() => { setPurpose('project'); setProjectId(''); }}>Collaborate on a project</button>
-          {projects.map(p => <button type="button" key={p.id} className={purpose === 'project' && projectId === p.id ? 'on' : ''} onClick={() => { setPurpose('project'); setProjectId(p.id); }}>Join / collaborate for {p.name}</button>)}
-          <button type="button" className={purpose === 'crew' ? 'on' : ''} onClick={() => { setPurpose('crew'); setProjectId(''); }}>Join or build a crew</button>
-          <button type="button" className={purpose === 'network' ? 'on' : ''} onClick={() => { setPurpose('network'); setProjectId(''); }}>General networking</button>
+          <p>Why would you like to connect?</p>
+          <button type="button" className={purpose === 'network' ? 'on' : ''} onClick={() => { setPurpose('network'); setProjectId(''); }}>Just connect</button>
+          <button type="button" className={purpose === 'project' ? 'on' : ''} onClick={() => setPurpose('project')}>Collaborate on a project</button>
+          <button type="button" className={purpose === 'crew' ? 'on' : ''} onClick={() => { setPurpose('crew'); setProjectId(''); }}>Build / join a team</button>
         </div>
-        {purpose === 'project' && <label className={projectId ? 'lm-project-set' : ''}>Project
-          <select value={projectId} onChange={e => setProjectId(e.target.value)}>
+        {purpose === 'project' && <label>Project
+          <select value={projectId} onChange={e => setProjectId(e.target.value)} required>
             <option value="">Choose a project</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.team_name_required ? ' · team name required' : ''}</option>)}
           </select>
         </label>}
-        {purpose !== 'network' && crews.length > 0 && <label>Existing crew
+        {purpose !== 'network' && crews.length > 0 && <label>Team you already have
           <select value={crewId} onChange={e => setCrewId(e.target.value)}>
-            <option value="">None — don’t create one</option>
+            <option value="">None</option>
             {crews.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>}
         {purpose === 'project' && !crewId && <label>{needsTeam ? 'Team name' : 'Team name (optional)'}
-          <input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={70} required={needsTeam} placeholder={needsTeam ? 'Required for this project' : 'Only if you already have a name in mind'} />
+          <input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={70} required={needsTeam} placeholder={needsTeam ? 'Required for this project' : 'Only if this project asks for one'} />
         </label>}
         <label>
-          <span className="lm-phone-label">Note (optional)</span>
+          <span className="lm-phone-label">Message (optional)</span>
           <span className="lm-desk">Add a message (optional)</span>
           <textarea value={note} onChange={e => setNote(e.target.value)} maxLength={280} rows={3} placeholder="A short hello" />
         </label>
-        <p className="lm-muted">Sending this request does not create a crew or add anyone to a team.</p>
+        <p className="lm-muted">Sending this request does not create a team or add anyone to a project.</p>
         {error && <p className="fc-error" role="alert">{error}</p>}
         <div className="lm-actions">
           <button className="lm-btn" disabled={busy} type="submit">{busy ? 'Sending…' : 'Send request'}</button>

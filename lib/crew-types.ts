@@ -14,6 +14,6 @@ export type Work={id:string;user_id:string;title:string;url:string;platform:stri
 export function schemaMissing(error:{message?:string;code?:string}|null|undefined){const message=error?.message||'';return error?.code==='42P01'||error?.code==='PGRST205'||/schema cache|does not exist|could not find the/i.test(message)}
 export type CrewMember={id:string;crew_id:string;user_id:string;invited_by:string;role:string;status:'invited'|'accepted'|'declined';created_at:string};
 export const ROLES=['Director','Producer','Writer','Actor','Cinematographer','Camera','Editor','Sound','Composer','Production Design','Lighting','Other'];
-export const INTENTS=[{value:'join',title:'Join a crew',description:'Meet teams who need your skills.'},{value:'build',title:'Build a crew',description:'Find creators for your next film.'},{value:'both',title:'Open to both',description:'Explore all the possibilities.'}];
+export const INTENTS=[{value:'join',title:'Join a team',description:'Meet people who need your skills.'},{value:'build',title:'Build a team',description:'Find creators for a project.'},{value:'both',title:'Open to both',description:'Connect first. Collaborate when you are ready.'}];
 export function nameOf(p:Pick<Creator,'display_name'|'username'>){return p.display_name?.trim()||p.username}
 export function profileReady(p:Partial<Creator>|null){return !!p?.onboarding_complete}

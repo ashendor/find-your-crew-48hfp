@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
-import type {Crew,Creator,Project} from '@/lib/crew-types';
+import {schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
 import '../../platform.css';
 
 type Member = {id:string;user_id:string;role:string;status:string;invited_by:string|null};
@@ -58,7 +58,18 @@ function ProjectScreen(){
   if (!project) return <PlatformShell><header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header><p className="fc-error">{error || 'Project not found.'}</p></PlatformShell>;
 
   async function requestJoin(){
-    if (!client) return; setBusy(true); setError('');
+    if (!client || !project) return; setBusy(true); setError('');
+    if (project.featured) {
+      const result = member
+        ? await client.from('project_members').update({status:'accepted'}).eq('id', member.id).eq('user_id', userId).select('status').maybeSingle()
+        : await client.from('project_members').insert({project_id:id, user_id:userId, invited_by:userId, role:user?.primary_role || 'Member', status:'accepted'}).select('status').maybeSingle();
+      setBusy(false);
+      const joinError = result.error;
+      const blocked = !joinError && result.data?.status !== 'accepted';
+      if (joinError || blocked) setError(!joinError || schemaMissing(joinError) || joinError.code === '42501' || /row-level security/i.test(joinError.message || '') ? 'Run the latest LikeMinds SQL update before joining a featured project.' : joinError.message);
+      else { setNotice('You joined. This project is now under Projects on your profile.'); void load(); }
+      return;
+    }
     const {error:insertError} = await client.from('project_members').insert({project_id:id, user_id:userId, invited_by:userId, role:user?.primary_role || 'Member', status:'invited'});
     setBusy(false);
     if (insertError) setError(insertError.message); else { setNotice('Join request sent. You are not on the team until it is accepted.'); void load(); }
@@ -89,7 +100,7 @@ function ProjectScreen(){
   async function linkCrew(crewId:string){
     if (!client || !crewId) return;
     const {error:insertError} = await client.from('crew_projects').insert({crew_id:crewId, project_id:id});
-    if (insertError) setError(insertError.message); else { setNotice('Crew linked to this project. Members were not added automatically.'); void load(); }
+    if (insertError) setError(insertError.message); else { setNotice('Team linked to this project. Members were not added automatically.'); void load(); }
   }
 
   const when = (start?:string|null, end?:string|null) => {
@@ -114,8 +125,8 @@ function ProjectScreen(){
         {!!project.required_roles?.length && <div><span>Roles</span><div className="lm-pills">{project.required_roles.map(role => <span key={role}>{role}</span>)}</div></div>}
       </div>
       <div className="lm-actions">
-        <Link className="lm-btn" href={'/explore?project=' + project.id}>Find creators</Link>
-        {!member && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Request to join</button>}
+        <Link className="lm-btn" href={'/explore?tab=people&project=' + project.id}>Find people</Link>
+        {member?.status !== 'accepted' && project.owner_id !== userId && (project.featured || !member) && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>{project.featured ? 'Join' : 'Request to join'}</button>}
       </div>
     </div>}
     {tab === 'team' && <div>
@@ -127,9 +138,9 @@ function ProjectScreen(){
         <label>Role<input className="lm-field" name="role" defaultValue="Member" /></label>
         <button className="lm-btn" type="submit">Send invitation</button>
       </form>}
-      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a crew you own
+      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a team you own
         <select className="lm-field" defaultValue="" onChange={e => void linkCrew(e.target.value)}>
-          <option value="">Choose a crew</option>
+          <option value="">Choose a team</option>
           {crews.filter(crew => !linked.includes(crew.id)).map(crew => <option key={crew.id} value={crew.id}>{crew.name}</option>)}
         </select>
       </label>}

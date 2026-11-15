@@ -25,7 +25,7 @@ function Icon({name}:{name:string}){
 export default function PlatformNav(){
   const path = usePathname();
   const current = (href:string) => {
-    if (href === '/profile' && (path.startsWith('/crews') || path.startsWith('/projects') || path.startsWith('/creators'))) return true;
+    if (href === '/profile' && (path.startsWith('/crews') || path.startsWith('/teams') || path.startsWith('/projects') || path.startsWith('/creators'))) return true;
     return path === href || path.startsWith(href + '/');
   };
   return <nav className="lm-bottom" aria-label="LikeMinds">

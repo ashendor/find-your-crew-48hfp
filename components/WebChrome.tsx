@@ -58,7 +58,7 @@ export function WebSide(){
   const path = usePathname();
   const {dot, featured} = useDeskAccount();
   const current = (href:string) => {
-    if (href === '/profile') return path.startsWith('/profile') || path.startsWith('/crews');
+    if (href === '/profile') return path.startsWith('/profile') || path.startsWith('/crews') || path.startsWith('/teams');
     if (href === '/explore') return path === '/explore' || path.startsWith('/creators');
     if (href === '/home') return path === '/home' || path.startsWith('/projects');
     return path === href;
@@ -82,7 +82,11 @@ export function WebTop(){
   useEffect(() => { setText(new URLSearchParams(window.location.search).get('q') || ''); }, []);
   function search(e:FormEvent){
     e.preventDefault();
-    router.push('/explore?q=' + encodeURIComponent(text.trim()));
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    const next = new URLSearchParams();
+    if (text.trim()) next.set('q', text.trim());
+    if (tab === 'projects') next.set('tab', 'projects');
+    router.push('/explore' + (next.toString() ? '?' + next.toString() : ''));
   }
   return <div className="lm-webtop">
     <form onSubmit={search}>
