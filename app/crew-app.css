@@ -199,3 +199,23 @@
  .fc-studio-savebar .fc-btn{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.fc-command-grid>a,.fc-command-photo,.fc-app--cinematic .fc-btn{transition:none}}
+
+
+/* Consistent focused workspaces — cinema-led, never a second marketing homepage. */
+.fc-workspace-page .fc-main{position:relative;padding-top:clamp(32px,4vw,55px)}
+.fc-workspace-page .fc-main>.fc-eyebrow:first-child{position:relative;z-index:1}
+.fc-workspace-page .fc-main>.fc-display{font-size:clamp(47px,5.3vw,78px);margin:8px 0 12px}
+.fc-workspace-page .fc-main>.fc-lead{font-size:14px;max-width:690px;margin-bottom:25px}
+.fc-workspace-page .fc-main:before{content:'';position:absolute;inset:0 0 auto;height:350px;pointer-events:none;background:linear-gradient(90deg,#171411 12%,#171411b3 65%,#17141173),url('/hero-filmset.webp') center 52%/cover;opacity:.25;mask-image:linear-gradient(black,transparent)}
+.fc-workspace-page .fc-main>*{position:relative}
+.fc-workspace-page .fc-section-header{margin-top:38px}
+.fc-workspace-page .fc-panel{box-shadow:0 16px 34px #0002}
+.fc-workspace-page .fc-panel .fc-eyebrow{color:#a9462c}
+.fc-workspace-page .fc-btn-alt{background:transparent}
+.fc-workspace-page .fc-filters{background:#28221b;border:1px solid #594635;padding:14px 17px;margin-top:24px}
+.fc-workspace-page .fc-discover-layout{margin-top:25px}
+.fc-workspace-page .fc-swipe-aside{background:#26201999;border-left:1px solid #6a5037;padding:22px}
+.fc-workspace-page .fc-toggle{border-color:#8e7353}
+.fc-workspace-page .fc-grid{gap:19px}
+.fc-workspace-page .fc-card-actions button{border-color:#9e7d50}
+@media(max-width:760px){.fc-workspace-page .fc-main:before{height:260px}.fc-workspace-page .fc-main>.fc-display{font-size:clamp(45px,10vw,68px)}.fc-workspace-page .fc-filters{padding:12px}}
