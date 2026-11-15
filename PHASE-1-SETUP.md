@@ -1,34 +1,32 @@
-# Phase 1 — LikeMinds creator onboarding
+# Phase 1 — Standalone Find Your Crew Supabase project
 
-## What is implemented
-- `/auth`: email magic-link sign in / sign up.
-- `/profile`: authenticated creator profile editor with role chips, skills, interests, availability, and profile photo upload.
-- `/creators/[username]`: public creator profile.
-- Homepage Create Profile and Join CTAs point to `/auth`.
-- Reuses the existing LikeMinds `public.profiles` table and `auth.users` trigger.
+New isolated Supabase project: `gtytlzylsohpeuewqjuw` (Mumbai).
+Dashboard: https://supabase.com/dashboard/project/gtytlzylsohpeuewqjuw
 
-## Vercel configuration (required before merge / launch)
-Set these environment variables in Vercel for Production and Preview:
-- `NEXT_PUBLIC_SUPABASE_URL`: the URL of the connected LikeMinds Supabase project
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key (or `NEXT_PUBLIC_SUPABASE_ANON_KEY` legacy fallback)
+## Implemented
+- `/auth`: email magic-link sign-in / signup
+- `/profile`: authenticated creator profile editing, photo, roles, skills and availability
+- `/creators/[username]`: public creator profile
+- Homepage Create Profile CTAs
+- New standalone `public.profiles` table with row-level security and automatic signup trigger
+- Dedicated `crew-avatars` storage bucket with per-user upload/delete policies
 
-**Never** add the service-role key or any secret key to `NEXT_PUBLIC_*`.
+## Required Vercel setup
+In Vercel → Settings → Environment Variables for this site (Preview and Production):
+- `NEXT_PUBLIC_SUPABASE_URL=https://gtytlzylsohpeuewqjuw.supabase.co`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: copy the **publishable** key from the new Find Your Crew Supabase project → Connect / API Keys.
 
-## Supabase Auth URL configuration (required)
-In Supabase Dashboard → Authentication → URL Configuration:
+Never use a service role or secret key in a `NEXT_PUBLIC_` variable.
+
+## Required Auth setup
+In the **new Find Your Crew project only**, Supabase → Authentication → URL Configuration:
 - Site URL: `https://find-your-crew-lake.vercel.app`
-- Add redirect URL: `https://find-your-crew-lake.vercel.app/profile`
-- Add Preview URLs only for trusted deployments, or use a scoped preview pattern.
-- Keep any existing LikeMinds redirect URLs and consider how changing Site URL could affect the main LikeMinds application. If the shared project's Site URL already points to LikeMinds, **do not overwrite it**; add Find Your Crew as an allowed redirect URL only.
+- Allowed redirect URL: `https://find-your-crew-lake.vercel.app/profile`
+- Add trusted Preview deployment redirects for QA if required.
 
-## Storage
-Created `crew-avatars` public bucket with 3 MB cap and JPEG/PNG/WebP MIME allowlist. Insert policy requires first folder segment to equal authenticated user ID; delete is similarly owner restricted.
-
-## Security and product notes
-- Existing LikeMinds `profiles` RLS allows public SELECT and owner writes. This phase does not modify its existing policies.
-- The existing `subscriptions` table has RLS disabled; review separately before launch.
-- Profile pictures are publicly accessible by URL. Do not upload sensitive photos.
-- No sample creators are inserted into the database.
-- Test sign-in, refresh, avatar upload, profile save, public profile and sign-out on a Vercel preview before merging.
-- Current public creator page shows all fields that the user enters in the profile editor, including their city and availability.
-- Official 48 Hour Film Project registration remains separate.
+## Before merge
+- Validate Next.js build and TypeScript.
+- QA sign-in email, redirect, session persistence, photo upload, profile saving, public creator page and sign-out.
+- The new project security advisor returned no findings at setup.
+- Do not insert illustrative profiles into the live database.
+- Official 48 Hour Film Project event registration is separate from Find Your Crew.
