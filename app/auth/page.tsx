@@ -43,6 +43,7 @@ export default function AuthPage() {
     // /profile is already on the production Supabase redirect allowlist.
     // It sends incomplete profiles to onboarding and completed profiles to
     // their editor. Existing accounts and profile IDs are preserved.
+    window.sessionStorage.setItem('fc:return-from-signin', '1');
     const { error: oauthError } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -51,6 +52,7 @@ export default function AuthPage() {
       },
     });
     if (oauthError) {
+      window.sessionStorage.removeItem('fc:return-from-signin');
       setBusy(false);
       setError(oauthError.message);
     }
@@ -61,6 +63,7 @@ export default function AuthPage() {
     if (!client || busy) return;
     setBusy(true);
     setError('');
+    window.sessionStorage.setItem('fc:return-from-signin', '1');
     const { error: authError } = await client.auth.signInWithOtp({
       email: email.trim(),
       options: {
@@ -69,7 +72,7 @@ export default function AuthPage() {
       },
     });
     setBusy(false);
-    if (authError) setError(authError.message);
+    if (authError) { window.sessionStorage.removeItem('fc:return-from-signin'); setError(authError.message); }
     else setSent(true);
   }
 
