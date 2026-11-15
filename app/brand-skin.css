@@ -1,0 +1,71 @@
+/* 48 Hour Film Project Dubai brand skin. Visual only. */
+.fc-app,
+.fc-app--cinematic,
+.fc-duo-app,
+.fc-dashboard-clean,
+.fc-crews-clean,
+.fc-onboarding,
+.crew-auth-reimagined{
+  background:#EFE6D2!important;
+  color:#1A1817!important;
+  font-family:Archivo,Arial,sans-serif!important;
+  background-image:none!important;
+}
+.fc-nav,
+.fc-nav--studio,
+.fc-duo-app .fc-nav--studio{
+  background:#EFE6D2!important;
+  border-bottom:3px solid #1A1817!important;
+  color:#1A1817!important;
+}
+.fc-wordmark,.fc-wordmark span,.fc-nav nav a,.fc-account-menu summary,.fc-account-name{color:#1A1817!important}
+.fc-nav nav a[aria-current=page],.fc-nav nav a:hover{color:#B4442E!important}
+.fc-account-avatar{background:#1A1817!important;color:#EFE6D2!important;border-color:#1A1817!important;font-family:Archivo,Arial,sans-serif!important}
+.fc-account-dropdown{background:#FAF8F3!important;border:2px solid #1A1817!important;box-shadow:none!important}
+.fc-account-dropdown>a,.fc-menu-signout{color:#1A1817!important}
+.fc-account-dropdown>a:hover,.fc-menu-signout:hover{background:#EFE6D2!important}
+.fc-chat-trigger,.fc-alert-trigger{color:#1A1817!important}
+.fc-display,.fc-section-title,.fc-command-intro h1,.fc-command-feature h2,.fc-studio-head h1,.fc-onboarding-art h1,
+.fd-workspace h1,.cc-head h1,.cc-section-top h2{
+  font-family:'Archivo Black',Arial,sans-serif!important;
+  font-weight:400!important;
+  letter-spacing:-.02em!important;
+  text-transform:uppercase;
+}
+.fc-display em,.fc-command-intro h1 em,.fc-command-feature h2 em,.fc-studio-head h1 em,.fc-onboarding-art h1 em{font-style:normal;color:#B4442E!important}
+.fc-eyebrow,.cc-eyebrow,.fd-eyebrow{color:#B4442E!important}
+.fc-lead,.fc-muted,.cc-head p:last-child,.cc-subtitle{color:#4A4541!important}
+.fc-btn,.cc-primary,.fd-action-primary{background:#1A1817!important;color:#EFE6D2!important;border:0!important;border-radius:0!important;letter-spacing:.08em;text-transform:uppercase}
+.fc-btn-alt,.cc-secondary{background:transparent!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important}
+.fc-dashboard-clean .fd-workspace{background:#EFE6D2!important}
+.fc-dashboard-clean .fd-action,.fc-dashboard-clean .fd-activity,.fc-dashboard-clean .fd-chat-row,.fc-dashboard-clean .fd-empty-chat,.fc-dashboard-clean .fd-profile-card,.fc-dashboard-clean .fd-tip,.fc-dashboard-clean .fd-inbox-shortcut{
+  background:#FAF8F3!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important;box-shadow:none!important;
+}
+.fc-dashboard-clean .fd-action small,.fc-dashboard-clean .fd-chat-copy small,.fc-dashboard-clean .fd-empty-chat{color:#4A4541!important}
+.fc-dashboard-clean .fd-text-action,.fc-dashboard-clean .fd-empty-chat a{color:#B4442E!important}
+.fc-bento a,.fc-bento>div,.fc-creator-card,.fc-panel,.fc-command-feature,.fc-command-profile{
+  background:#FAF8F3!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important;box-shadow:none!important;
+}
+.fc-photo-copy h2,.fc-card-quote{font-family:'Archivo Black',Arial,sans-serif!important;font-style:normal!important;color:#1A1817!important}
+.fc-card-quote{font-weight:400!important}
+.fc-duo-scene{background:#EFE6D2!important;min-height:auto!important}
+.fc-duo-hero-photo,.fc-duo-scene:before,.fc-duo-film-edge,.fc-duo-filmstrip,.fc-command-photo,.fc-command-photo-shade{display:none!important}
+.fc-duo-choice{background:#FAF8F3!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important;box-shadow:none!important}
+.fc-duo-choice-overlay{background:linear-gradient(180deg,#EFE6D200,#1A181740)!important}
+.fc-crews-clean .cc-how,.fc-crews-clean .cc-team,.fc-crews-clean .cc-empty{background:#FAF8F3!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important}
+.fc-field input,.fc-field select,.fc-field textarea,.fc-filter-input{background:#fff9ec!important;color:#1A1817!important;border:1px solid #1A1817!important;border-radius:0!important;font-family:Archivo,Arial,sans-serif!important}
+.fc-onboarding-art,.fc-onboarding-art .fc-muted,.fc-onboarding-art a,.fc-onboarding-art h1{background:#1A1817!important;color:#EFE6D2!important}
+.fc-onboarding-art{background:#1A1817!important}
+.fc-onboarding-form{background:#EFE6D2!important;color:#1A1817!important}
+.fc-onboarding-form .fc-eyebrow{color:#B4442E!important}
+.crew-auth-scene-image{background:url('/brand/poster-sadu-whos-in-your-team.jpg') center/cover!important;animation:none!important}
+.crew-auth-scene-wash{background:linear-gradient(90deg,#EFE6D2f2 0%,#EFE6D2c4 46%,#EFE6D288 100%)!important}
+.crew-auth-scene-grid{display:none!important}
+.crew-auth-glass{background:#FAF8F3!important;color:#1A1817!important;border:2px solid #1A1817!important;border-radius:0!important;box-shadow:none!important}
+.crew-auth-main-heading,.crew-auth-main-heading span,.crew-auth-main-heading em,.crew-auth-panel-main h2,.crew-auth-editorial-main>p{font-family:'Archivo Black',Arial,sans-serif!important;font-style:normal!important;letter-spacing:-.02em!important;text-transform:uppercase;color:#1A1817!important}
+.crew-auth-editorial-main>p{font-family:Archivo,Arial,sans-serif!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important;color:#4A4541!important}
+.crew-auth-main-heading em,.crew-auth-panel-main h2 em{font-family:'Archivo Black',Arial,sans-serif!important;font-style:normal!important;color:#B4442E!important}
+.crew-auth-topbar a,.crew-auth-message,.crew-auth-panel-footer p{color:#1A1817!important}
+.crew-auth-email-form button[type=submit],.crew-auth-google{border-radius:0!important}
+.crew-auth-email-form button[type=submit]{background:#1A1817!important}
+.crew-auth-editorial-footer,.crew-auth-corner-code{color:#4A4541!important}

@@ -1,17 +1,20 @@
 'use client';
-import {ChangeEvent,FormEvent,useEffect,useRef,useState} from 'react';
+import {ChangeEvent,FormEvent,Suspense,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
-import {useRouter} from 'next/navigation';
-import CrewNav from '@/components/CrewNav';
+import {useRouter,useSearchParams} from 'next/navigation';
+import {PlatformShell} from '@/components/PlatformNav';
+import ProfilePanels from '@/components/ProfilePanels';
 import CreatorCard from '@/components/CreatorCard';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
-import {INTENTS,ROLES,type Creator} from '@/lib/crew-types';
+import {INTENTS,ROLES,schemaMissing,type Creator} from '@/lib/crew-types';
 import '../crew-app.css';
+import '../platform.css';
+import '../brand-skin.css';
 
-const initial={username:'',display_name:'',headline:'',bio:'',location:'Dubai',avatar_url:'',primary_role:'',categories:[] as string[],skills_tags:'',intent:'both' as 'join'|'build'|'both',experience:'emerging',portfolio_url:'',available_for_48hfp:false,available_for_collaboration:false};
+const initial={username:'',display_name:'',headline:'',bio:'',location:'Dubai',avatar_url:'',primary_role:'',categories:[] as string[],skills_tags:'',intent:'both' as 'join'|'build'|'both',experience:'emerging',portfolio_url:'',instagram_url:'',youtube_url:'',vimeo_url:'',behance_url:'',dribbble_url:'',website_url:'',available_for_48hfp:false,available_for_collaboration:false};
 
-export default function ProfilePage(){
- const router=useRouter(),client=getCrewSupabase();
+function ProfilePage(){
+ const router=useRouter(),params=useSearchParams(),client=getCrewSupabase();
  const [userId,setUserId]=useState(''),[loading,setLoading]=useState(true),[form,setForm]=useState(initial);
  const [saving,setSaving]=useState(false),[photoBusy,setPhotoBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('');
  const [optionalOpen,setOptionalOpen]=useState(false),[dirty,setDirty]=useState(false);
@@ -31,11 +34,11 @@ export default function ProfilePage(){
   const isAuthCallback = callbackQuery.has('code') || callbackQuery.has('token_hash') || window.location.hash.includes('access_token=');
   if(returnedFromSignIn || isAuthCallback){
    window.sessionStorage.removeItem('fc:return-from-signin');
-   router.replace('/dashboard');
+   router.replace('/home');
    return;
   }
   const p=data as Creator;
-  setForm({username:p.username||'',display_name:p.display_name||'',headline:p.headline||'',bio:p.bio||'',location:p.location||'',avatar_url:p.avatar_url||'',primary_role:p.primary_role||'',categories:p.categories||[],skills_tags:(p.skills_tags||[]).join(', '),intent:p.intent||'both',experience:p.experience||'emerging',portfolio_url:p.portfolio_url||'',available_for_48hfp:!!p.available_for_48hfp,available_for_collaboration:!!p.available_for_collaboration});
+  setForm({username:p.username||'',display_name:p.display_name||'',headline:p.headline||'',bio:p.bio||'',location:p.location||'',avatar_url:p.avatar_url||'',primary_role:p.primary_role||'',categories:p.categories||[],skills_tags:(p.skills_tags||[]).join(', '),intent:p.intent||'both',experience:p.experience||'emerging',portfolio_url:p.portfolio_url||'',instagram_url:p.instagram_url||'',youtube_url:p.youtube_url||'',vimeo_url:p.vimeo_url||'',behance_url:p.behance_url||'',dribbble_url:p.dribbble_url||'',website_url:p.website_url||'',available_for_48hfp:!!p.available_for_48hfp,available_for_collaboration:!!p.available_for_collaboration});
   setLoading(false)
  })();return()=>{active=false}},[client,router]);
 
@@ -59,7 +62,9 @@ export default function ProfilePage(){
   if(!form.display_name.trim()||!form.primary_role){setError('Your name and primary filmmaking role are required.');return}
   setSaving(true);
   const payload={id:userId,username:form.username,display_name:form.display_name.trim(),headline:form.headline.trim(),bio:form.bio.trim(),location:form.location.trim(),avatar_url:form.avatar_url||null,primary_role:form.primary_role,categories:Array.from(new Set([form.primary_role,...form.categories])),skills_tags:form.skills_tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),intent:form.intent,experience:form.experience,portfolio_url:form.portfolio_url||null,available_for_48hfp:form.available_for_48hfp,available_for_collaboration:form.available_for_collaboration,onboarding_complete:true,updated_at:new Date().toISOString()};
-  const {error:saveError}=await client.from('profiles').upsert(payload,{onConflict:'id'});
+  const links={instagram_url:form.instagram_url||null,youtube_url:form.youtube_url||null,vimeo_url:form.vimeo_url||null,behance_url:form.behance_url||null,dribbble_url:form.dribbble_url||null,website_url:form.website_url||null};
+  let {error:saveError}=await client.from('profiles').upsert({...payload,...links},{onConflict:'id'});
+  if(saveError&&schemaMissing(saveError)){({error:saveError}=await client.from('profiles').upsert(payload,{onConflict:'id'}))}
   setSaving(false);
   if(saveError)setError(saveError.code==='23505'?'This handle is already taken. Try another.':saveError.message);
   else{setDirty(false);setSuccess('Creator Card saved and updated.');router.refresh()}
@@ -72,8 +77,12 @@ export default function ProfilePage(){
  if(loading)return <main className="fc-app"><div className="fc-main">{error||'Opening your Creator Studio…'}</div></main>;
  if(!client)return <main className="fc-app"><div className="fc-main">Sign-in configuration is unavailable.</div></main>;
  const preview:Creator={id:userId,username:form.username||'creator',display_name:form.display_name,headline:form.headline,bio:form.bio,location:form.location,avatar_url:form.avatar_url,categories:Array.from(new Set([form.primary_role,...form.categories].filter(Boolean))),skills_tags:form.skills_tags.split(',').map(x=>x.trim()).filter(Boolean),looking_for:[],available_for_collaboration:form.available_for_collaboration,primary_role:form.primary_role,intent:form.intent,experience:form.experience,portfolio_url:form.portfolio_url,available_for_48hfp:form.available_for_48hfp,onboarding_complete:true};
- return <main className="fc-app fc-app--cinematic"><CrewNav userName={form.display_name}/><div className="fc-studio-shell">
-  <div className="fc-studio-head"><div><p className="fc-eyebrow">YOUR CREATIVE IDENTITY / THE CREATOR STUDIO</p><h1>Make your <em>mark.</em></h1><p>Every great collaboration begins with an introduction. Make yours unforgettable.</p></div><Link href="/dashboard" className="fc-studio-back">← My Space</Link></div>
+ const tab=params.get('tab')==='work'||params.get('tab')==='projects'||params.get('tab')==='crews'?params.get('tab') as 'work'|'projects'|'crews':'edit';
+ return <PlatformShell>
+  <div className="fc-studio-head"><div><p className="fc-eyebrow">YOUR LIKEMINDS PROFILE</p><h1>{form.display_name||'Your profile'}</h1><p>{form.headline||'One profile for every collaboration.'}</p></div><Link href="/home" className="fc-studio-back">← Home</Link></div>
+  <div className="lm-tabs"><Link href="/profile" aria-current={tab==='edit'?'page':undefined}>Edit</Link><Link href="/profile?tab=work" aria-current={tab==='work'?'page':undefined}>Work</Link><Link href="/profile?tab=projects" aria-current={tab==='projects'?'page':undefined}>Projects</Link><Link href="/profile?tab=crews" aria-current={tab==='crews'?'page':undefined}>Crews</Link></div>
+  {tab!=='edit'&&<ProfilePanels userId={userId} tab={tab}/>}
+  {tab==='edit'&&<div className="fc-studio-shell">
   <div className="fc-studio-layout">
    <aside className="fc-studio-preview">
     <div className="fc-studio-preview-heading"><span>LIVE PREVIEW</span><span>THIS IS HOW CREATORS SEE YOU ↘</span></div>
@@ -100,6 +109,12 @@ export default function ProfilePage(){
         <div className="fc-field"><label htmlFor="studio-intent">I’m here to</label><select id="studio-intent" value={form.intent} onChange={e=>set('intent',e.target.value as typeof form.intent)}>{INTENTS.map(i=><option key={i.value} value={i.value}>{i.title}</option>)}</select></div>
        </div>
        <div className="fc-field"><label htmlFor="studio-link">Portfolio or Instagram</label><input id="studio-link" type="url" maxLength={300} value={form.portfolio_url} onChange={e=>set('portfolio_url',e.target.value)} placeholder="https://…"/></div>
+       <div className="fc-field"><label htmlFor="studio-ig">Instagram</label><input id="studio-ig" type="url" maxLength={300} value={form.instagram_url} onChange={e=>set('instagram_url',e.target.value)} placeholder="https://instagram.com/…"/></div>
+       <div className="fc-field"><label htmlFor="studio-yt">YouTube</label><input id="studio-yt" type="url" maxLength={300} value={form.youtube_url} onChange={e=>set('youtube_url',e.target.value)} placeholder="https://youtube.com/…"/></div>
+       <div className="fc-field"><label htmlFor="studio-vimeo">Vimeo</label><input id="studio-vimeo" type="url" maxLength={300} value={form.vimeo_url} onChange={e=>set('vimeo_url',e.target.value)} placeholder="https://vimeo.com/…"/></div>
+       <div className="fc-field"><label htmlFor="studio-behance">Behance</label><input id="studio-behance" type="url" maxLength={300} value={form.behance_url} onChange={e=>set('behance_url',e.target.value)} placeholder="https://behance.net/…"/></div>
+       <div className="fc-field"><label htmlFor="studio-dribbble">Dribbble</label><input id="studio-dribbble" type="url" maxLength={300} value={form.dribbble_url} onChange={e=>set('dribbble_url',e.target.value)} placeholder="https://dribbble.com/…"/></div>
+       <div className="fc-field"><label htmlFor="studio-site">Website</label><input id="studio-site" type="url" maxLength={300} value={form.website_url} onChange={e=>set('website_url',e.target.value)} placeholder="https://…"/></div>
        <div className="fc-field"><label htmlFor="studio-skills">Other skills (comma separated)</label><input id="studio-skills" value={form.skills_tags} onChange={e=>set('skills_tags',e.target.value)} placeholder="Lighting, editing, sound"/></div>
       </div>
     </details>
@@ -108,6 +123,7 @@ export default function ProfilePage(){
       <button type="submit" className="fc-btn" disabled={saving||photoBusy}>{saving?'Saving…':'Save my Creator Card ↗'}</button>
     </div>
    </form>
-  </div>
- </div></main>
+  </div></div>}
+ </PlatformShell>
 }
+export default function ProfileRoute(){return <Suspense fallback={<main className="lm-page"><div className="lm-main">Opening your profile…</div></main>}><ProfilePage/></Suspense>}

@@ -6,10 +6,15 @@ import { useRouter } from 'next/navigation';
 import { getCrewSupabase } from '@/lib/crew-supabase';
 import '../profile/creator.css';
 import './auth-modern.css';
+import '../brand-skin.css';
 
 // Do not advertise Google sign-in until the Google Cloud OAuth application
 // and the Supabase Google provider have both been configured.
 const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === 'true';
+
+// Local `next dev` only. Production builds inline NODE_ENV as "production",
+// so the password form is not shown on Vercel. Magic link and Google stay as-is.
+const localPasswordAuth = process.env.NODE_ENV === 'development';
 
 function GoogleMark() {
   return <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
@@ -22,6 +27,7 @@ function GoogleMark() {
 
 export default function AuthPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +38,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (!client) return;
     client.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace('/dashboard');
+      if (data.user) router.replace('/home');
     });
   }, [client, router]);
 
@@ -56,6 +62,25 @@ export default function AuthPage() {
       setBusy(false);
       setError(oauthError.message);
     }
+  }
+
+  async function signInWithPassword(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!client || busy || !localPasswordAuth) return;
+    setBusy(true);
+    setError('');
+    window.sessionStorage.setItem('fc:return-from-signin', '1');
+    const { error: authError } = await client.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setBusy(false);
+    if (authError) {
+      window.sessionStorage.removeItem('fc:return-from-signin');
+      setError(authError.message);
+      return;
+    }
+    router.push('/profile');
   }
 
   async function signInWithEmail(e: FormEvent<HTMLFormElement>) {
@@ -96,12 +121,20 @@ export default function AuthPage() {
             <p className="crew-auth-message">We sent a secure sign-in link to <strong>{email}</strong>. Open it to join your creative space.</p>
             <button type="button" className="crew-auth-back-email" onClick={()=>setSent(false)}>← Use another email</button>
           </> : <>
-            <p className="crew-auth-message">One tap and you're in. No passwords. Just possibility.</p>
+            <p className="crew-auth-message">{localPasswordAuth ? 'Local test sign-in. Use an account created in Supabase.' : "One tap and you're in. No passwords. Just possibility."}</p>
             {googleEnabled&&<button type="button" className="crew-auth-google" disabled={busy||!client} onClick={()=>void signInWithGoogle()}>
               <GoogleMark/><span>{busy?'Opening Google…':'Continue with Google'}</span><span className="crew-auth-google-arrow" aria-hidden="true">↗</span>
             </button>}
-            {googleEnabled&&!emailOpen&&<button type="button" className="crew-auth-email-link" onClick={()=>setEmailOpen(true)}>Prefer email? Use a sign-in link <span>↗</span></button>}
-            {emailOpen&&<form className="crew-auth-email-form" onSubmit={signInWithEmail}>
+            {googleEnabled&&!emailOpen&&<button type="button" className="crew-auth-email-link" onClick={()=>setEmailOpen(true)}>{localPasswordAuth ? <>Prefer email? Use a password <span>↗</span></> : <>Prefer email? Use a sign-in link <span>↗</span></>}</button>}
+            {emailOpen&&localPasswordAuth&&<form className="crew-auth-email-form" onSubmit={signInWithPassword}>
+              <label htmlFor="crew-email">YOUR EMAIL</label>
+              <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
+              <label htmlFor="crew-password">PASSWORD</label>
+              <input id="crew-password" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6}/>
+              <button type="submit" disabled={busy||!client}>{busy?'Signing in…':'Sign in ↗'}</button>
+              {googleEnabled&&<button type="button" className="crew-auth-back-email" onClick={()=>setEmailOpen(false)}>← Back to Google sign-in</button>}
+            </form>}
+            {emailOpen&&!localPasswordAuth&&<form className="crew-auth-email-form" onSubmit={signInWithEmail}>
               <label htmlFor="crew-email">YOUR EMAIL</label>
               <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
               <button type="submit" disabled={busy||!client}>{busy?'Sending…':'Send sign-in link ↗'}</button>

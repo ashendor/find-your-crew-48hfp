@@ -6,6 +6,7 @@ import CreatorCard from '@/components/CreatorCard';
 import {useCrewUser} from '@/lib/use-crew';
 import {ROLES,type Creator,type Crew} from '@/lib/crew-types';
 import '../crew-app.css';
+import '../brand-skin.css';
 export default function Discover(){
  const {client,user,userId,loading,error:userError}=useCrewUser();
  const [creators,setCreators]=useState<Creator[]>([]),[history,setHistory]=useState<string[]>([]),[connections,setConnections]=useState<string[]>([]),[crews,setCrews]=useState<Crew[]>([]);

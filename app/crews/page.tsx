@@ -1,11 +1,13 @@
 'use client';
 import {FormEvent,useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
-import CrewNav from '@/components/CrewNav';
+import {PlatformShell} from '@/components/PlatformNav';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Crew,CrewMember,Creator} from '@/lib/crew-types';
 import '../crew-app.css';
 import '../crews-clean.css';
+import '../platform.css';
+import '../brand-skin.css';
 
 type Invite=CrewMember&{crews?:{name:string}|null};
 
@@ -40,8 +42,7 @@ export default function Crews(){
  const pending=membership.filter(i=>i.status==='invited');
  const joined=membership.filter(i=>i.status==='accepted'&&!mine.some(c=>c.id===i.crew_id));
  const total=mine.length+joined.length;
- return <main className="fc-app fc-duo-app fc-crews-clean">
-  <CrewNav userName={user.display_name}/>
+ return <PlatformShell>
   <div className="cc-shell">
    <header className="cc-head">
     <div><p className="cc-eyebrow">YOUR FILM TEAMS</p><h1>My Crews</h1><p>Create a team, invite filmmakers, and make your film together.</p></div>
@@ -65,12 +66,12 @@ export default function Crews(){
    </section>}
 
    <section className="cc-teams" aria-labelledby="cc-your-crews">
-    <div className="cc-section-top"><div><p className="cc-eyebrow">YOUR WORKSPACE</p><h2 id="cc-your-crews">Your teams <span className="cc-count">{total}</span></h2><p className="cc-subtitle">Crews you lead and teams you’ve joined, all in one place.</p></div><Link href="/discover" className="cc-discover-link">Find filmmakers <span aria-hidden="true">↗</span></Link></div>
-    {total===0?<div className="cc-empty"><div className="cc-empty-symbol" aria-hidden="true">✳</div><h3>No crews yet</h3><p>Create a crew to start inviting people, or discover filmmakers to collaborate with.</p><div className="cc-empty-actions"><button type="button" className="cc-primary" onClick={()=>{setShowForm(true);document.getElementById('cc-create')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Create your first crew →</button><Link href="/discover" className="cc-secondary">Discover filmmakers</Link></div></div>:<div className="cc-team-grid">
+    <div className="cc-section-top"><div><p className="cc-eyebrow">YOUR WORKSPACE</p><h2 id="cc-your-crews">Your teams <span className="cc-count">{total}</span></h2><p className="cc-subtitle">Crews you lead and teams you’ve joined, all in one place.</p></div><Link href="/explore" className="cc-discover-link">Find filmmakers <span aria-hidden="true">↗</span></Link></div>
+    {total===0?<div className="cc-empty"><div className="cc-empty-symbol" aria-hidden="true">✳</div><h3>No crews yet</h3><p>Create a crew to start inviting people, or discover filmmakers to collaborate with.</p><div className="cc-empty-actions"><button type="button" className="cc-primary" onClick={()=>{setShowForm(true);document.getElementById('cc-create')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Create your first crew →</button><Link href="/explore" className="cc-secondary">Discover filmmakers</Link></div></div>:<div className="cc-team-grid">
      {mine.map(crew=>{const crewMembers=members.filter(m=>m.crew_id===crew.id);const open=expanded.includes(crew.id);return <article className="cc-team-card" key={crew.id}>
       <div className="cc-team-top"><span className="cc-tag">CREW OWNER</span><span className="cc-member-count">{crewMembers.filter(m=>m.status==='accepted').length} members</span></div>
       <h3>{crew.name}</h3><p className="cc-team-description">{crew.description||'Your film team is ready for collaborators.'}</p>
-      <div className="cc-team-actions"><Link className="cc-primary" href="/discover">Invite filmmakers ↗</Link>{crewMembers.length>0&&<button className="cc-secondary" type="button" aria-expanded={open} onClick={()=>setExpanded(x=>x.includes(crew.id)?x.filter(id=>id!==crew.id):[...x,crew.id])}>{open?'Hide members':'View members'}</button>}</div>
+      <div className="cc-team-actions"><Link className="cc-primary" href="/explore">Invite filmmakers ↗</Link>{crewMembers.length>0&&<button className="cc-secondary" type="button" aria-expanded={open} onClick={()=>setExpanded(x=>x.includes(crew.id)?x.filter(id=>id!==crew.id):[...x,crew.id])}>{open?'Hide members':'View members'}</button>}</div>
       {open&&crewMembers.length>0&&<ul className="cc-members">{crewMembers.map(m=><li key={m.id}><span>{people[m.user_id]?.display_name||'Filmmaker'} <small>· {m.role}</small></span><span className="cc-member-status">{m.status}</span></li>)}</ul>}
      </article>})}
      {joined.map(i=><article className="cc-team-card" key={i.id}><div className="cc-team-top"><span className="cc-tag cc-tag-joined">CREW MEMBER</span><span className="cc-member-count">Joined</span></div><h3>{i.crews?.name||'Film crew'}</h3><p className="cc-team-description">Your role: <strong>{i.role}</strong></p><p className="cc-joined-note">You’re part of this crew.</p></article>)}
@@ -78,5 +79,5 @@ export default function Crews(){
    </section>
    <footer className="cc-footer">FIND YOUR CREW <span>BY LIKEMINDS · DUBAI 2026</span></footer>
   </div>
- </main>
+ </PlatformShell>
 }
