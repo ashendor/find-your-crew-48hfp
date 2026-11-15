@@ -31,7 +31,7 @@ export default function AuthPage() {
     else setSent(true);
   }
 
-  return <main className="crew-page"><div className="crew-shell">
+  return <main className="crew-page crew-auth-page"><div className="crew-shell">
     <Link className="crew-back" href="/">← Find Your Crew</Link>
     <div className="crew-auth-layout"><div className="crew-auth-art"><p>LIKEMINDS PRESENTS</p><h1>Good films start with <em>great crews.</em></h1><span>48 HOUR FILM PROJECT · DUBAI</span></div>
     <section className="crew-paper"><p className="crew-eyebrow">JOIN THE CREATIVE COMMUNITY</p><h2>{sent ? 'Check your inbox.' : 'Find your people.'}</h2>

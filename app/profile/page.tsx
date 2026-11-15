@@ -78,7 +78,7 @@ export default function ProfilePage() {
   }
 
   async function signOut(){await client?.auth.signOut();router.replace('/')}
-  if(loading)return <main className="crew-page"><div className="crew-shell">Loading your creator profile…</div></main>;
+  if(loading)return <main className="crew-page crew-profile-page"><div className="crew-shell">Loading your creator profile…</div></main>;
   if(!client)return <main className="crew-page"><div className="crew-shell"><Link href="/">← Home</Link><p>Supabase is not configured. Add the public environment variables in Vercel.</p></div></main>;
 
   return <main className="crew-page"><div className="crew-shell">
