@@ -59,8 +59,8 @@ export default function CrewInboxDrawer({open,onClose,initialTab='chats'}:{open:
   setBusy(false);if(e)setError(e.message);else{setNotice(status==='accepted'?'You joined the crew!':'Invitation declined.');changed();void refresh()}
  }
  async function send(e:FormEvent){e.preventDefault();if(!client||!userId||!thread||!draft.trim()||busy)return;setBusy(true);setError('');
-  const {data,error:e}=await client.from('messages').insert({connection_id:thread.id,sender_id:userId,body:draft.trim().slice(0,2000)}).select().single();
-  setBusy(false);if(e)setError(e.message);else{setMessages(v=>[...v,data as Message]);setRecent(v=>({...v,[thread.id]:data as Message}));setDraft('');changed()}
+  const {data,error:sendError}=await client.from('messages').insert({connection_id:thread.id,sender_id:userId,body:draft.trim().slice(0,2000)}).select().single();
+  setBusy(false);if(sendError)setError(sendError.message);else{setMessages(v=>[...v,data as Message]);setRecent(v=>({...v,[thread.id]:data as Message}));setDraft('');changed()}
  }
  const other=(c:Connection)=>people[c.requester_id===userId?c.recipient_id:c.requester_id];
  const pending=connections.filter(c=>c.status==='pending'&&c.recipient_id===userId);
