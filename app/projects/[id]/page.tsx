@@ -1,18 +1,19 @@
 'use client';
-import {FormEvent,useCallback,useEffect,useState} from 'react';
+import {FormEvent,Suspense,useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import {useParams} from 'next/navigation';
 import {PlatformShell} from '@/components/PlatformNav';
+import BackButton from '@/components/BackButton';
+import HeaderActions from '@/components/HeaderActions';
+import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Crew,Creator,Project} from '@/lib/crew-types';
-import '../../crew-app.css';
 import '../../platform.css';
-import '../../brand-skin.css';
 
 type Member = {id:string;user_id:string;role:string;status:string;invited_by:string|null};
 type Chat = {id:string;sender_id:string;body:string;created_at:string};
 
-export default function ProjectPage(){
+function ProjectScreen(){
   const {id} = useParams<{id:string}>();
   const {client,user,userId,loading} = useCrewUser();
   const [tab,setTab] = useState<'overview'|'team'|'links'|'chat'>('overview');
@@ -54,7 +55,7 @@ export default function ProjectPage(){
     void client.from('project_messages').select('*').eq('project_id', id).order('created_at').then(({data}) => setChats((data || []) as Chat[]));
   }, [client, canChat, id, tab]);
   if (loading || !user) return <main className="lm-page"><div className="lm-main">Opening project…</div></main>;
-  if (!project) return <PlatformShell><p className="fc-error">{error || 'Project not found.'}</p></PlatformShell>;
+  if (!project) return <PlatformShell><header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header><p className="fc-error">{error || 'Project not found.'}</p></PlatformShell>;
 
   async function requestJoin(){
     if (!client) return; setBusy(true); setError('');
@@ -91,30 +92,42 @@ export default function ProjectPage(){
     if (insertError) setError(insertError.message); else { setNotice('Crew linked to this project. Members were not added automatically.'); void load(); }
   }
 
+  const when = (start?:string|null, end?:string|null) => {
+    if (!start) return 'Dates to be confirmed';
+    const fmt = (value:string) => new Date(value + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+    return !end || end === start ? fmt(start) : fmt(start) + ' – ' + fmt(end);
+  };
   return <PlatformShell>
-    <p className="lm-kicker">{project.featured ? 'Featured project' : 'Project'}</p>
-    <h1>{project.name}</h1>
-    <div className="lm-tabs">{(['overview','team','links','chat'] as const).map(item => <button key={item} className={tab === item ? 'on' : ''} type="button" onClick={() => setTab(item)}>{item}</button>)}</div>
-    {error && <p className="fc-error" role="alert">{error}</p>}
-    {notice && <p className="fc-notice" role="status">{notice}</p>}
+    <header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header>
+    <header className="lm-pagehead">
+      <p className="lm-kicker">{project.featured ? 'Featured project' : 'Project'}</p>
+      <h1>{project.name}</h1>
+    </header>
+    <Tabs label="Project" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'overview', label:'Overview'},{id:'team', label:'Team'},{id:'links', label:'Links'},{id:'chat', label:'Chat'}]} />
+    {error && <p className="lm-alert" role="alert">{error}</p>}
+    {notice && <p className="lm-note" role="status">{notice}</p>}
     {tab === 'overview' && <div className="lm-card">
       <p>{project.description}</p>
-      <p>{project.starts_on || 'Dates to be confirmed'}{project.ends_on ? ' — ' + project.ends_on : ''}</p>
-      <p>{project.team_name_required ? 'Team name is mandatory when you connect for this project.' : 'Team name is optional.'}</p>
-      {!!project.required_roles?.length && <p>Roles: {project.required_roles.join(', ')}</p>}
-      <div className="lm-row">
-        <Link className="fc-btn" href={'/explore?project=' + project.id}>Find creators</Link>
-        {!member && project.owner_id !== userId && <button className="fc-btn fc-btn-alt" type="button" disabled={busy} onClick={() => void requestJoin()}>Request to join</button>}
+      <div className="lm-facts">
+        <div><span>Dates</span><p>{when(project.starts_on, project.ends_on)}</p></div>
+        <div><span>Team name</span><p>{project.team_name_required ? 'Required when you connect for this project.' : 'Optional.'}</p></div>
+        {!!project.required_roles?.length && <div><span>Roles</span><div className="lm-pills">{project.required_roles.map(role => <span key={role}>{role}</span>)}</div></div>}
+      </div>
+      <div className="lm-actions">
+        <Link className="lm-btn" href={'/explore?project=' + project.id}>Find creators</Link>
+        {!member && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Request to join</button>}
       </div>
     </div>}
     {tab === 'team' && <div>
-      <div className="lm-grid">{members.map(item => <article className="lm-card" key={item.id}><strong>{people[item.user_id]?.display_name || 'Creator'}</strong><p>{item.role} · {item.status}</p></article>)}</div>
-      {(project.owner_id === userId) && <form className="lm-card" style={{marginTop:16}} onSubmit={e => void invite(e)}>
-        <label>Invite by handle<input className="lm-field" name="handle" required placeholder="username" /></label>
+      {members.map(item => <article className="lm-rowitem" key={item.id}>{people[item.user_id]?.avatar_url ? <img src={people[item.user_id].avatar_url || ''} alt="" /> : <span className="lm-avatar">{(people[item.user_id]?.display_name || 'C').slice(0,1)}</span>}<div><strong>{people[item.user_id]?.display_name || 'Creator'}</strong><p>{item.role} · {item.status}</p></div></article>)}
+      {!members.length && <div className="lm-empty"><strong>No one on the team yet</strong><p>Invitations stay pending until someone accepts. A connection alone does not add them.</p></div>}
+      {project.owner_id === userId && <form className="lm-card lm-form" style={{marginTop:18}} onSubmit={e => void invite(e)}>
+        <h2>Invite a creator</h2>
+        <label>Handle<input className="lm-field" name="handle" required placeholder="username" /></label>
         <label>Role<input className="lm-field" name="role" defaultValue="Member" /></label>
-        <button className="fc-btn">Send invitation</button>
+        <button className="lm-btn" type="submit">Send invitation</button>
       </form>}
-      {crews.length > 0 && <label style={{display:'grid',gap:8,marginTop:16}}>Associate a crew you own
+      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a crew you own
         <select className="lm-field" defaultValue="" onChange={e => void linkCrew(e.target.value)}>
           <option value="">Choose a crew</option>
           {crews.filter(crew => !linked.includes(crew.id)).map(crew => <option key={crew.id} value={crew.id}>{crew.name}</option>)}
@@ -122,15 +135,25 @@ export default function ProjectPage(){
       </label>}
     </div>}
     {tab === 'links' && <div>
-      {links.map(link => <p key={link.id}><a href={link.url} target="_blank" rel="noopener noreferrer">{link.title}</a></p>)}
-      {canChat && <form className="lm-card" onSubmit={e => void addLink(e)}><input className="lm-field" name="title" required placeholder="Title" /><input className="lm-field" name="url" type="url" required placeholder="https://" /><button className="fc-btn">Add link</button></form>}
-      {!canChat && <p className="lm-muted">External links are visible here. Participants can add them.</p>}
+      {links.map(link => <a className="lm-rowitem" key={link.id} href={link.url} target="_blank" rel="noopener noreferrer"><span className="lm-avatar">↗</span><div><strong>{link.title}</strong><p>{link.url.replace(/^https?:\/\//, '')}</p></div></a>)}
+      {!links.length && <div className="lm-empty"><strong>No links yet</strong><p>Add a Drive folder, script, or reference. Files stay on the original site.</p></div>}
+      {canChat && <form className="lm-card lm-form" style={{marginTop:18}} onSubmit={e => void addLink(e)}>
+        <h2>Add a link</h2>
+        <label>Title<input className="lm-field" name="title" required placeholder="Shot list" /></label>
+        <label>URL<input className="lm-field" name="url" type="url" required placeholder="https://" /></label>
+        <button className="lm-btn" type="submit">Add link</button>
+      </form>}
     </div>}
-    {tab === 'chat' && <div className="lm-card">
+    {tab === 'chat' && <div>
       {canChat ? <>
-        {chats.map(chat => <p key={chat.id}><b>{people[chat.sender_id]?.display_name || (chat.sender_id === userId ? 'You' : 'Member')}: </b>{chat.body}</p>)}
-        <form onSubmit={e => void sendChat(e)} className="lm-row"><input className="lm-field" name="body" aria-label="Group message" /><button className="fc-btn">Send</button></form>
-      </> : <p>Group chat opens after you are an accepted participant.</p>}
+        {chats.map(chat => <p key={chat.id} className={chat.sender_id === userId ? 'lm-bubble mine' : 'lm-bubble'}><b>{people[chat.sender_id]?.display_name || (chat.sender_id === userId ? 'You' : 'Member')}</b><br/>{chat.body}</p>)}
+        {!chats.length && <div className="lm-empty"><strong>No messages yet</strong><p>This chat is only for people already on the project.</p></div>}
+        <form onSubmit={e => void sendChat(e)} className="lm-row" style={{marginTop:14}}><input className="lm-field" name="body" aria-label="Group message" placeholder="Message the team" /><button className="lm-btn" type="submit">Send</button></form>
+      </> : <div className="lm-empty"><strong>Chat is for the team</strong><p>You can read and write here after a join request is accepted.</p></div>}
     </div>}
   </PlatformShell>;
+}
+
+export default function ProjectPage(){
+  return <Suspense fallback={<main className="lm-page"><div className="lm-frame"><div className="lm-main">Opening project…</div></div></main>}><ProjectScreen /></Suspense>;
 }

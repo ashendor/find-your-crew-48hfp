@@ -3,7 +3,7 @@ import {FormEvent,useEffect,useState} from 'react';
 import {getCrewSupabase} from '@/lib/crew-supabase';
 import type {Crew,Project} from '@/lib/crew-types';
 
-export default function ConnectSheet({open,onClose,recipientId,recipientName,presetProjectId}:{open:boolean;onClose:()=>void;recipientId:string;recipientName:string;presetProjectId?:string}){
+export default function ConnectSheet({open,onClose,recipientId,recipientName,recipientAvatar,presetProjectId}:{open:boolean;onClose:()=>void;recipientId:string;recipientName:string;recipientAvatar?:string;presetProjectId?:string}){
   const client = getCrewSupabase();
   const [purpose,setPurpose] = useState<'network'|'project'|'crew'>('network');
   const [projects,setProjects] = useState<Project[]>([]);
@@ -14,14 +14,13 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,pre
   const [note,setNote] = useState('');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
-  const [sent,setSent] = useState(false);
   const project = projects.find(p => p.id === projectId);
 
   useEffect(() => {
     if (!open || !client) return;
     setPurpose(presetProjectId ? 'project' : 'network');
     setProjectId(presetProjectId || '');
-    setCrewId(''); setTeamName(''); setNote(''); setError(''); setSent(false);
+    setCrewId(''); setTeamName(''); setNote(''); setError('');
     void (async () => {
       const {data:{user}} = await client.auth.getUser();
       const [p,c] = await Promise.all([
@@ -57,26 +56,36 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,pre
     });
     setBusy(false);
     if (insertError) setError(insertError.code === '23505' ? 'A connection already exists or is waiting for a reply.' : insertError.message);
-    else setSent(true);
+    else onClose();
   }
 
-  return <div className="lm-sheet" role="presentation" onClick={onClose}>
-    <form onClick={e => e.stopPropagation()} onSubmit={e => void send(e)} aria-label={'Connect with ' + recipientName}>
+  return <div className="lm-sheet lm-connect" role="presentation" onClick={onClose}>
+    <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-label={'Connect with ' + recipientName} onClick={e => e.stopPropagation()}>
+    <div className="lm-grab" aria-hidden="true" />
+    <form onSubmit={e => void send(e)}>
       <p className="lm-kicker">Connect</p>
+      <button className="lm-desk lm-connect-x" type="button" onClick={onClose} aria-label="Close">×</button>
       <h2>{recipientName}</h2>
-      {sent ? <>
-        <p>Request sent. Nothing is added to a crew or a project until someone invites them and they accept.</p>
-        <button className="fc-btn" type="button" onClick={onClose}>Done</button>
-      </> : <>
-        <label>Why are you connecting?
+      <div className="lm-desk lm-connect-who">
+        {recipientAvatar ? <img src={recipientAvatar} alt="" /> : <span>{recipientName.slice(0,1)}</span>}
+        <p><span>You're connecting with</span><strong>{recipientName}</strong></p>
+      </div>
+      <label className="lm-purpose-native">Why are you connecting?
           <select value={purpose} onChange={e => setPurpose(e.target.value as typeof purpose)}>
             <option value="network">Just connect / Network</option>
             <option value="project">Collaborate on a project</option>
             <option value="crew">Join or build a crew</option>
           </select>
         </label>
-        {purpose === 'project' && <label>Project
-          <select value={projectId} onChange={e => setProjectId(e.target.value)} required>
+        <div className="lm-desk lm-purpose-web">
+          <p>Purpose of connecting</p>
+          <button type="button" className={purpose === 'project' && !projectId ? 'on' : ''} onClick={() => { setPurpose('project'); setProjectId(''); }}>Collaborate on a project</button>
+          {projects.map(p => <button type="button" key={p.id} className={purpose === 'project' && projectId === p.id ? 'on' : ''} onClick={() => { setPurpose('project'); setProjectId(p.id); }}>Join / collaborate for {p.name}</button>)}
+          <button type="button" className={purpose === 'crew' ? 'on' : ''} onClick={() => { setPurpose('crew'); setProjectId(''); }}>Join or build a crew</button>
+          <button type="button" className={purpose === 'network' ? 'on' : ''} onClick={() => { setPurpose('network'); setProjectId(''); }}>General networking</button>
+        </div>
+        {purpose === 'project' && <label className={projectId ? 'lm-project-set' : ''}>Project
+          <select value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">Choose a project</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.team_name_required ? ' · team name required' : ''}</option>)}
           </select>
@@ -90,16 +99,18 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,pre
         {purpose === 'project' && !crewId && <label>{needsTeam ? 'Team name' : 'Team name (optional)'}
           <input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={70} required={needsTeam} placeholder={needsTeam ? 'Required for this project' : 'Only if you already have a name in mind'} />
         </label>}
-        <label>Note (optional)
+        <label>
+          <span className="lm-phone-label">Note (optional)</span>
+          <span className="lm-desk">Add a message (optional)</span>
           <textarea value={note} onChange={e => setNote(e.target.value)} maxLength={280} rows={3} placeholder="A short hello" />
         </label>
         <p className="lm-muted">Sending this request does not create a crew or add anyone to a team.</p>
         {error && <p className="fc-error" role="alert">{error}</p>}
-        <div className="lm-row">
-          <button className="fc-btn" disabled={busy} type="submit">{busy ? 'Sending…' : 'Send request'}</button>
-          <button className="fc-btn fc-btn-alt" type="button" onClick={onClose}>Cancel</button>
+        <div className="lm-actions">
+          <button className="lm-btn" disabled={busy} type="submit">{busy ? 'Sending…' : 'Send request'}</button>
+          <button className="lm-btn-line" type="button" onClick={onClose}>Cancel</button>
         </div>
-      </>}
     </form>
+    </div>
   </div>;
 }

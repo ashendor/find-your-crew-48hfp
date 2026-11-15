@@ -2,6 +2,8 @@
 import {FormEvent,useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import {PlatformShell} from '@/components/PlatformNav';
+import BackButton from '@/components/BackButton';
+import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Crew,CrewMember,Creator} from '@/lib/crew-types';
 import '../crew-app.css';
@@ -44,6 +46,7 @@ export default function Crews(){
  const total=mine.length+joined.length;
  return <PlatformShell>
   <div className="cc-shell">
+   <header className="lm-top"><BackButton fallback="/profile?tab=crews" /><HeaderActions /></header>
    <header className="cc-head">
     <div><p className="cc-eyebrow">YOUR FILM TEAMS</p><h1>My Crews</h1><p>Create a team, invite filmmakers, and make your film together.</p></div>
     <button className="cc-primary cc-head-create" type="button" onClick={()=>setShowForm(v=>!v)} aria-expanded={showForm} aria-controls="cc-create">{showForm?'Close form':'＋ Create crew'}</button>

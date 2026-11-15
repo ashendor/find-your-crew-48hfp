@@ -2,14 +2,26 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {getCrewSupabase} from '@/lib/crew-supabase';
+import WorkShot from '@/components/WorkShot';
 import type {Crew,Project,Work} from '@/lib/crew-types';
 
-export default function ProfilePanels({userId,tab}:{userId:string;tab:'work'|'projects'|'crews'}){
+export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab:'work'|'projects'|'crews';owner?:boolean}){
   const client = getCrewSupabase();
   const [works,setWorks] = useState<Work[]>([]);
   const [projects,setProjects] = useState<Project[]>([]);
   const [crews,setCrews] = useState<Crew[]>([]);
   const [joined,setJoined] = useState<string[]>([]);
+  const [busy,setBusy] = useState(false);
+  const [error,setError] = useState('');
+  async function remove(work:Work){
+    if (!client || busy) return;
+    if (!window.confirm('Remove “' + work.title + '” from your shared links?')) return;
+    setBusy(true); setError('');
+    const {error:deleteError} = await client.from('works').delete().eq('id', work.id).eq('user_id', userId);
+    setBusy(false);
+    if (deleteError) setError(deleteError.message);
+    else setWorks(list => list.filter(item => item.id !== work.id));
+  }
   useEffect(() => {
     if (!client || !userId) return;
     void (async () => {
@@ -37,7 +49,9 @@ export default function ProfilePanels({userId,tab}:{userId:string;tab:'work'|'pr
       }
     })();
   }, [client, userId, tab]);
-  if (tab === 'work') return <div className="lm-grid">{works.map(work => <a className="lm-card" key={work.id} href={work.url} target="_blank" rel="noopener noreferrer"><span className="lm-kicker">{work.platform || 'Link'}</span><strong>{work.title}</strong></a>)}{!works.length && <p className="lm-muted">No external work yet. Share a link from Create.</p>}<Link className="fc-btn" href="/create">Share work</Link></div>;
-  if (tab === 'projects') return <div className="lm-grid">{projects.map(project => <Link className="lm-card" key={project.id} href={'/projects/' + project.id}><strong>{project.name}</strong><p>{project.description}</p></Link>)}{!projects.length && <p className="lm-muted">No projects yet.</p>}</div>;
-  return <div className="lm-grid">{crews.map(crew => <article className="lm-card" key={crew.id}><span className="lm-kicker">Owner</span><strong>{crew.name}</strong><p>{crew.description}</p></article>)}{joined.map(name => <article className="lm-card" key={name}><span className="lm-kicker">Member</span><strong>{name}</strong></article>)}{!crews.length && !joined.length && <p className="lm-muted">No crews yet. Create one when you mean to.</p>}<Link className="fc-btn" href="/crews">Manage crews</Link></div>;
+  const stills = ['/brand/past-jbr-finals.jpg','/brand/poster-heist.jpg','/brand/poster-scifi.jpg','/brand/past-crew-at-monitor-2019.jpg','/brand/poster-documentary.jpg','/brand/poster-silent-film.jpg'];
+  const pieces = works.filter(work => work.platform !== 'profile-link');
+  if (tab === 'work') return pieces.length ? <section className="lm-plat-block"><div className="lm-plat-head"><h3>Shared links</h3><p>Individual pieces, separate from the platforms above.</p></div>{error && <p className="lm-alert" role="alert">{error}</p>}<div className="lm-mosaic">{owner && <Link className="lm-addshot" href="/create?mode=work"><b>+</b><span>Add</span></Link>}{pieces.map((work, index) => <div className="lm-shotwrap" key={work.id}><WorkShot url={work.url} fallback={stills[index % stills.length]}><i>{work.platform || 'Link'}</i><span>{work.title}</span></WorkShot>{owner && <button className="lm-shot-x" type="button" disabled={busy} aria-label={'Remove ' + work.title} onClick={() => void remove(work)}>×</button>}</div>)}</div></section> : null;
+  if (tab === 'projects') return projects.length ? <div>{projects.map(project => <Link className="lm-rowitem" key={project.id} href={'/projects/' + project.id}><span className="lm-avatar">{project.name.slice(0,1)}</span><div><strong>{project.name}</strong><p>{project.description || 'Project'}</p></div></Link>)}{owner && <Link className="lm-addline" href="/create?mode=project">Add a project</Link>}</div> : <div className="lm-empty"><strong>No projects yet</strong><p>{owner ? 'Start one, or join after you are invited. Connecting with someone does not add you.' : 'Projects this creator starts will show up here.'}</p>{owner && <Link className="lm-btn" href="/create?mode=project">Create a project</Link>}</div>;
+  return <div>{crews.map(crew => <article className="lm-rowitem" key={crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><strong>{crew.name}</strong><p>{crew.description || (owner ? 'Crew you lead' : 'Crew')}</p></div></article>)}{joined.map(name => <article className="lm-rowitem" key={name}><span className="lm-avatar">{name.slice(0,1)}</span><div><strong>{name}</strong><p>Joined</p></div></article>)}{!crews.length && !joined.length && <div className="lm-empty"><strong>No crews yet</strong><p>{owner ? 'A crew is only created when you confirm it. A team name on a request does not make one.' : 'A crew appears here only after this creator creates one.'}</p>{owner && <Link className="lm-btn" href="/create?mode=crew">Create a crew</Link>}</div>}{owner && (crews.length > 0 || joined.length > 0) && <div className="lm-actions" style={{marginTop:16}}><Link className="lm-addline" href="/create?mode=crew">Add a crew</Link><Link className="lm-addline" href="/crews">Manage crews</Link></div>}</div>;
 }
