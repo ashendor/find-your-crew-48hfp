@@ -1,6 +1,6 @@
-import CrewExperience from '@/components/CrewExperience';
-import './crew-experience.css';
+import CinematicHome from '@/components/CinematicHome';
+import './cinematic.css';
 
 export default function Home() {
-  return <CrewExperience />;
+  return <CinematicHome />;
 }
