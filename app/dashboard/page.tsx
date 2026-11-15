@@ -2,37 +2,59 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {useCrewUser} from '@/lib/use-crew';
-import CreatorCard from '@/components/CreatorCard';
 import CrewNav from '@/components/CrewNav';
-import type {Creator} from '@/lib/crew-types';
 import '../crew-app.css';
+
 export default function Dashboard(){
  const {client,user,userId,loading,error}=useCrewUser();
- const [crews,setCrews]=useState(0),[invites,setInvites]=useState(0),[requests,setRequests]=useState(0),[suggestions,setSuggestions]=useState<Creator[]>([]);
- useEffect(()=>{if(!client||!userId||!user)return;(async()=>{
-  const [a,b,c,d]=await Promise.all([
+ const [crewCount,setCrewCount]=useState(0),[invites,setInvites]=useState(0),[requests,setRequests]=useState(0),[connections,setConnections]=useState(0);
+ useEffect(()=>{if(!client||!userId)return;let active=true;(async()=>{
+  const [crews,crewInvites,connectionRequests,accepted]=await Promise.all([
    client.from('crews').select('id',{count:'exact',head:true}).eq('owner_id',userId),
    client.from('crew_members').select('id',{count:'exact',head:true}).eq('user_id',userId).eq('status','invited'),
    client.from('connections').select('id',{count:'exact',head:true}).eq('recipient_id',userId).eq('status','pending'),
-   client.from('profiles').select('*').eq('onboarding_complete',true).neq('id',userId).limit(6)
+   client.from('connections').select('id',{count:'exact',head:true}).eq('status','accepted').or('requester_id.eq.'+userId+',recipient_id.eq.'+userId)
   ]);
-  setCrews(a.count||0);setInvites(b.count||0);setRequests(c.count||0);
-  const profiles=(d.data||[]) as Creator[];
-  setSuggestions(profiles.sort((x,y)=>Number(y.primary_role===user.primary_role)-Number(x.primary_role===user.primary_role)).slice(0,3))
- })()},[client,userId,user]);
+  if(active){setCrewCount(crews.count||0);setInvites(crewInvites.count||0);setRequests(connectionRequests.count||0);setConnections(accepted.count||0)}
+ })();return()=>{active=false}},[client,userId]);
  if(loading||!user)return <main className="fc-app"><div className="fc-main">{error||'Opening your creative space…'}</div></main>;
- return <main className="fc-app"><CrewNav userName={user.display_name}/><div className="fc-main">
-  <section className="fc-dashboard-hero"><div className="fc-dashboard-hero-content"><p className="fc-eyebrow">WELCOME BACK / {user.display_name.toUpperCase()}</p><h1 className="fc-display">Your next film <em>starts here.</em></h1><p className="fc-lead">Meet creative people, build a crew and make something unforgettable. Your space. Your story.</p><div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:25}}><Link className="fc-btn" href="/discover">Discover Creators ↗</Link><Link className="fc-btn fc-btn-alt" href="/crews">Create a Crew ＋</Link></div></div><div className="fc-dashboard-art" role="img" aria-label="Cinematic film set"/></section>
-  <div className="fc-section-header"><div><p className="fc-eyebrow">EVERYTHING IN ONE PLACE</p><h2 className="fc-section-title">My Crew Space.</h2></div><span className="fc-muted">CREATE · CONNECT · COLLABORATE</span></div>
-  <div className="fc-bento"><Link href="/crews"><span className="fc-bento-symbol">◎</span><strong>My Crews</strong><small>{crews} crews created · Manage your team</small></Link>
-   <Link href="/discover"><span className="fc-bento-symbol">◇</span><strong>Discover</strong><small>Swipe through creators and connect</small></Link>
-   <Link href="/connections"><span className="fc-bento-symbol">♡</span><strong>Connections</strong><small>{requests} requests · {invites} crew invitations</small></Link>
-   <Link href="/profile"><span className="fc-bento-symbol">▧</span><strong>My Creator Card</strong><small>Edit your craft and share your story</small></Link></div>
-  <div className="fc-section-header"><div><p className="fc-eyebrow">A CREATOR WORTH KNOWING</p><h2 className="fc-section-title">Your story. <em>Your card.</em></h2></div><Link href={'/creators/'+encodeURIComponent(user.username)} className="fc-btn fc-btn-alt fc-btn-small">Share your profile ↗</Link></div>
-  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,330px),1fr))',gap:35,alignItems:'start'}}>
-   <CreatorCard creator={user}/><div><p className="fc-eyebrow">YOUR FILM BEGINS WITH A CONNECTION</p><h2 className="fc-section-title">Make your next move.</h2><p className="fc-lead">Your Creator Card is how other filmmakers discover you. Add a portrait and a great introduction to make it your own.</p><div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:25}}><Link href="/profile" className="fc-btn fc-btn-alt">Edit my card ↗</Link><Link href="/discover" className="fc-btn">Meet creators →</Link></div></div>
-  </div>
-  <div className="fc-section-header"><div><p className="fc-eyebrow">PEOPLE WORTH MEETING</p><h2 className="fc-section-title">The next connection.</h2></div><Link className="fc-btn fc-btn-alt fc-btn-small" href="/discover">Explore all ↗</Link></div>
-  {suggestions.length?<div className="fc-grid">{suggestions.map(p=><CreatorCard key={p.id} creator={p} variant="compact"/>)}</div>:<div className="fc-empty"><h2>You're early. That's exciting.</h2><p>As more creators join, you'll see real profiles and collaborators here.</p><Link className="fc-btn" href="/discover">Explore the community →</Link></div>}
+ const attention=invites+requests;
+ const firstName=(user.display_name||user.username).trim().split(/\s+/)[0];
+ const actions=[
+ {href:'/discover',icon:'◈',eyebrow:'01 / MEET PEOPLE',title:'Discover Creators',desc:'Find the right creative people for your next film.',cta:'Explore creators ↗',kind:'primary'},
+ {href:'/crews',icon:'◎',eyebrow:'02 / BUILD TOGETHER',title:'My Crews',desc:crewCount?crewCount+' crew'+(crewCount===1?'':'s')+' created · Manage your people':'Create a crew and invite collaborators.',cta:'Open my crews ↗',kind:'neutral'},
+ {href:'/connections',icon:'♡',eyebrow:'03 / SAY HELLO',title:'Connections',desc:requests?requests+' request'+(requests===1?'':'s')+' awaiting your response':connections?connections+' creator'+(connections===1?'':'s')+' connected':'Requests, messages and conversations.',cta:'Open connections ↗',kind:'neutral'}
+ ];
+ return <main className="fc-app fc-app--cinematic"><CrewNav userName={user.display_name}/><div className="fc-command-shell">
+   <section className="fc-command-intro">
+     <p className="fc-eyebrow">YOUR CREATIVE COMMAND CENTRE <span className="fc-command-dash">/</span> DUBAI 2026</p>
+     <h1>Hey, <em>{firstName}.</em></h1>
+     <p>What will you create next? Your people, your crews, your next great film — all in one place.</p>
+   </section>
+   <section className="fc-command-grid" aria-label="Choose your next move">
+     <Link href="/discover" className="fc-command-feature">
+       <div className="fc-command-photo" aria-hidden="true"/>
+       <div className="fc-command-photo-shade" aria-hidden="true"/>
+       <div className="fc-command-feature-content">
+         <span className="fc-command-label">THE NEXT CONNECTION STARTS HERE</span>
+         <div><h2>Find your<br/><em>people.</em></h2><p>Discover filmmakers who can bring your story to life.</p><span className="fc-command-feature-cta">Discover Creators <span>↗</span></span></div>
+       </div>
+     </Link>
+     <Link href="/profile" className="fc-command-profile">
+       <span className="fc-command-label">YOUR CREATOR IDENTITY <span>↗</span></span>
+       <div className="fc-command-profile-portrait" style={user.avatar_url?{backgroundImage:'url("'+user.avatar_url+'")'}:{}}>{!user.avatar_url&&<span>{firstName.charAt(0)}</span>}</div>
+       <div className="fc-command-profile-text"><h2>{user.display_name}</h2><p>{user.primary_role||'Creator'} <span>·</span> {user.location||'Dubai'}</p><span>View & edit your card ↗</span></div>
+     </Link>
+     {actions.slice(1).map(item=><Link key={item.href} href={item.href} className="fc-command-action">
+       <div className="fc-command-action-top"><span className="fc-command-label">{item.eyebrow}</span><span className="fc-command-action-icon" aria-hidden="true">{item.icon}</span></div>
+       <div><h2>{item.title}</h2><p>{item.desc}</p><span>{item.cta}</span></div>
+     </Link>)}
+     <Link href={requests?'/connections':'/crews'} className="fc-command-attention">
+       <div className="fc-command-attention-title"><span className="fc-command-attention-dot"/> YOUR ACTIVITY</div>
+       <span className="fc-command-attention-text">{attention>0?attention+' item'+(attention===1?'':'s')+' need your attention':'You’re all caught up. Ready to make something?'}</span>
+       <span className="fc-command-attention-arrow">↗</span>
+     </Link>
+   </section>
+   <footer className="fc-command-footer"><span>FIND YOUR CREW · BY LIKEMINDS</span><span>CREATE <i>·</i> CONNECT <i>·</i> COLLABORATE</span></footer>
  </div></main>;
 }
