@@ -14,3 +14,14 @@
 @media(max-width:1100px){.fc-bento{grid-template-columns:repeat(2,minmax(0,1fr))}.fc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fc-discover-layout{grid-template-columns:minmax(0,1fr) minmax(340px,430px)}.fc-swipe-aside:last-child{display:none}.fc-nav-user{display:none}}
 @media(max-width:760px){.fc-nav{height:auto;display:block;padding:18px 20px}.fc-nav nav{margin-top:17px;overflow-x:auto;flex-wrap:nowrap;gap:20px;padding-bottom:8px}.fc-nav nav a{font-size:11px}.fc-main{padding:35px 18px 100px}.fc-dashboard-hero{grid-template-columns:1fr}.fc-dashboard-art{min-height:190px;grid-row:1}.fc-bento{grid-template-columns:repeat(2,minmax(0,1fr))}.fc-bento a{padding:19px;min-height:140px}.fc-grid{grid-template-columns:1fr}.fc-discover-layout{display:block}.fc-swipe-aside{display:none}.fc-swipe-frame .fc-creator-card{max-width:420px}.fc-two-col{grid-template-columns:1fr}.fc-onboarding{grid-template-columns:1fr}.fc-onboarding-art{height:auto;position:relative;min-height:240px;padding:50px 25px}.fc-onboarding-art h1{font-size:46px;margin:12px 0}.fc-onboarding-form{min-height:70svh;padding:35px 25px}.fc-card-actions button{min-height:57px}}
 @media(prefers-reduced-motion:reduce){.fc-complete-overlay,.fc-complete-overlay h1,.fc-swipe-frame{animation:none;transition:none}}
+
+
+/* Launch: account navigation and accessible logout on mobile. */
+.fc-nav-account{display:flex;align-items:center;gap:15px;flex-shrink:0}
+.fc-signout-wrap{display:inline-flex;flex-direction:column;gap:3px;align-items:flex-start}
+.fc-signout{border:1px solid #72543a!important;color:#f5dec2!important;background:transparent!important;border-radius:3px;padding:10px 14px;font-size:11px!important;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+.fc-signout:hover{background:#b4442e!important;border-color:#b4442e!important}
+.fc-signout:disabled{opacity:.6;cursor:not-allowed}
+.fc-signout-error{color:#ffb7a5;font-size:11px;max-width:200px}
+@media(max-width:1150px){.fc-nav{flex-wrap:wrap;height:auto;gap:12px}.fc-nav nav{order:3;width:100%;display:flex;justify-content:space-between;overflow-x:auto;padding:8px 0}.fc-nav-account{margin-left:auto}.fc-nav-user{display:inline;font-size:11px}}
+@media(max-width:760px){.fc-nav{display:flex;align-items:center;gap:9px;padding:15px 18px}.fc-wordmark{font-size:14px}.fc-wordmark span{font-size:7px}.fc-nav-account{gap:9px}.fc-nav-user{font-size:10px}.fc-signout{padding:8px 9px;font-size:10px!important}.fc-nav nav{margin:4px 0 0;justify-content:flex-start;gap:22px;flex-wrap:nowrap}.fc-nav nav a{font-size:12px}}

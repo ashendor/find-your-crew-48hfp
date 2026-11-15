@@ -22,7 +22,6 @@ export default function ProfilePage(){
  if(!form.display_name.trim()||!form.primary_role){setError('Add a name and primary role.');return}
  setSaving(true);const payload={id:userId,username:form.username,display_name:form.display_name.trim(),headline:form.headline.trim(),bio:form.bio.trim(),location:form.location.trim(),avatar_url:form.avatar_url||null,primary_role:form.primary_role,categories:Array.from(new Set([form.primary_role,...form.categories])),skills_tags:form.skills_tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),intent:form.intent,experience:form.experience,portfolio_url:form.portfolio_url||null,available_for_48hfp:form.available_for_48hfp,available_for_collaboration:form.available_for_collaboration,onboarding_complete:true,updated_at:new Date().toISOString()};
  const {error:e2}=await client.from('profiles').upsert(payload,{onConflict:'id'});setSaving(false);if(e2)setError(e2.code==='23505'?'That username is already taken.':e2.message);else setSuccess('Your Creator Card is updated!')}
- async function signOut(){await client?.auth.signOut();router.replace('/')}
  if(loading)return <main className="fc-app"><div className="fc-main">{error||'Preparing your Creator Card…'}</div></main>;
  if(!client)return <main className="fc-app"><div className="fc-main">Supabase configuration missing.</div></main>;
  return <main className="fc-app"><CrewNav userName={form.display_name}/><div className="fc-main">
@@ -41,7 +40,7 @@ export default function ProfilePage(){
  <label><input type="checkbox" checked={form.available_for_48hfp} onChange={e=>set('available_for_48hfp',e.target.checked)}/> Available for the 48-hour film challenge</label>
  {error&&<p className="fc-error" role="alert" style={{color:'#b4442e'}}>{error}</p>}{success&&<p style={{color:'#2f7540'}} role="status">{success} <Link href={'/creators/'+form.username}>View profile ↗</Link></p>}
  <button className="fc-btn" type="submit" disabled={saving||photoBusy}>{saving?'Saving…':'Save Creator Card →'}</button>
- <button type="button" style={{background:'transparent',border:0,color:'#a7472e'}} onClick={()=>void signOut()}>Sign out</button>
+ 
  </form><aside style={{position:'sticky',top:25}}><p className="fc-eyebrow">YOUR CARD IN THE WILD</p><h2 className="fc-section-title">Make it <em>memorable.</em></h2><p className="fc-muted">Your profile travels with you across Find Your Crew. Add a portrait and one strong line about your craft.</p><Link href="/dashboard" className="fc-btn fc-btn-alt">← Back to My Space</Link></aside></div>
  </div></main>;
 }

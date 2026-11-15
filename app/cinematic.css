@@ -117,3 +117,18 @@ html{scroll-behavior:smooth}.cinematic{--cream:#efe6d2;--red:#b4442e;--gold:#d9a
 }
 @media(max-height:680px) and (max-width:640px){.cin-hero-content{padding-top:80px;padding-bottom:62px}.cin-hero-content h1{font-size:43px}.cin-hero-content .cin-description{margin-top:12px}.cin-hero .cin-buttons{margin-top:13px}}
 @media(prefers-reduced-motion:reduce){.cin-hero-playing:before,.cin-hero-playing .cin-filmset-beam,.cin-hero-playing .cin-filmset-haze{animation:none!important}}
+
+
+/* Launch: consistent and visible authentication in the cinematic homepage. */
+.cin-account-actions{display:flex;align-items:center;gap:14px;margin-left:14px;flex-shrink:0}
+.cin-account-link{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border:1px solid #e7c38b;padding:10px 16px;color:#f8e9d0!important;font-size:12px;font-weight:800;letter-spacing:.04em;text-decoration:none;transition:background .2s}
+.cin-account-link:hover{background:#b4442e;border-color:#b4442e}
+.cin-logout{color:#f2e4cf;background:transparent;border:0;padding:9px 4px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.cin-logout:hover{color:#efbe69}
+.cin-mobile-auth{display:none}
+.cin-account-actions .fc-signout-wrap{display:flex;flex-direction:column}
+.cin-account-actions .fc-signout-error{font-size:11px;color:#ffb9a9;max-width:180px}
+@media(max-width:1220px){.cin-header-nav{gap:14px}.cin-account-actions{gap:8px;margin-left:0}.cin-account-link{padding:9px 12px}}
+@media(max-width:1000px){.cin-header-nav{gap:10px}.cin-header-nav button{font-size:11px}.cin-account-link{font-size:11px;padding:8px 10px}}
+@media(max-width:900px){.cin-account-actions{display:none}.cin-mobile-auth{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:16px 0 6px;border-top:1px solid #796549}.cin-mobile-auth a,.cin-mobile-auth button{display:block;width:100%;background:transparent;border:0;color:#f3e4cf;text-decoration:none;font-size:14px;text-align:left;padding:12px 0;font-weight:800}.cin-mobile-auth a:hover,.cin-mobile-auth button:hover{color:#e8bc6c}.cin-header-nav{display:none;position:absolute;top:100%;left:0;right:0;max-height:calc(100svh - 80px);overflow:auto;background:#171411f5;padding:20px;flex-direction:column;align-items:stretch;gap:5px}.cin-header-nav.is-open{display:flex}.cin-menu{display:block}.cin-header-nav button{text-align:left;font-size:14px;padding:12px}}
+@media(max-width:640px){.cin-header-nav{max-height:calc(100svh - 66px)}}

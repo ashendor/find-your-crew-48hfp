@@ -2,6 +2,7 @@
 import {ChangeEvent,FormEvent,useEffect,useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
+import SignOutButton from '@/components/SignOutButton';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
 import {INTENTS,ROLES,type Creator} from '@/lib/crew-types';
 import '../crew-app.css';
@@ -29,7 +30,7 @@ export default function Onboarding(){
  if(loading)return <main className="fc-app"><div className="fc-main">Preparing your creative space…</div></main>;
  if(!client)return <main className="fc-app"><div className="fc-main">Sign-in configuration is missing. <Link href="/auth">Return to sign-in</Link></div></main>;
  return <main className="fc-onboarding">
-  <aside className="fc-onboarding-art"><p className="fc-eyebrow">LIKEMINDS × FIND YOUR CREW</p><h1>Every great film starts with <em>your people.</em></h1><p className="fc-muted">A small introduction. A world of possibilities.</p><Link href="/" style={{marginTop:40,fontSize:12}}>← BACK TO THE FILM</Link></aside>
+  <aside className="fc-onboarding-art"><p className="fc-eyebrow">LIKEMINDS × FIND YOUR CREW</p><h1>Every great film starts with <em>your people.</em></h1><p className="fc-muted">A small introduction. A world of possibilities.</p><div style={{display:"flex",gap:20,alignItems:"center",marginTop:40,flexWrap:"wrap"}}><Link href="/" style={{fontSize:12}}>← BACK TO THE FILM</Link><SignOutButton /></div></aside>
   <section className="fc-onboarding-form"><p className="fc-eyebrow">YOUR CREATOR STORY / {String(step+1).padStart(2,'0')} OF 05</p>
   <div className="fc-progress" aria-label={'Step '+(step+1)+' of 5'}>{steps.map((s,i)=><span key={s} className={i<=step?'active':''}/>)}</div>
   <form onSubmit={next}>
