@@ -29,7 +29,7 @@ export default function TeamsPage(){
   if (loading || !user) return <main className="lm-page"><div className="lm-main">Opening teams…</div></main>;
   return <PlatformShell>
     <header className="lm-top"><BackButton fallback="/profile?tab=teams" /><h1 className="lm-bar-title">Teams</h1><HeaderActions /></header>
-    {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || 'Team'}</p></div></Link>)}
+    {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? 'You lead this team' : 'Member')}</p></div></Link>)}
     {!teams.length && <div className="lm-empty"><strong>No teams yet</strong><p>Create one when you are ready to work together. A name on a connection request does not make a team.</p><Link className="lm-btn" href="/create?mode=team">Create a team</Link></div>}
     {teams.length > 0 && <Link className="lm-addline" href="/create?mode=team">Add a team</Link>}
   </PlatformShell>;

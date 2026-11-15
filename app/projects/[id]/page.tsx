@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
-import type {Crew,Creator,Project} from '@/lib/crew-types';
+import {schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
 import '../../platform.css';
 
 type Member = {id:string;user_id:string;role:string;status:string;invited_by:string|null};
@@ -58,7 +58,18 @@ function ProjectScreen(){
   if (!project) return <PlatformShell><header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header><p className="fc-error">{error || 'Project not found.'}</p></PlatformShell>;
 
   async function requestJoin(){
-    if (!client) return; setBusy(true); setError('');
+    if (!client || !project) return; setBusy(true); setError('');
+    if (project.featured) {
+      const result = member
+        ? await client.from('project_members').update({status:'accepted'}).eq('id', member.id).eq('user_id', userId).select('status').maybeSingle()
+        : await client.from('project_members').insert({project_id:id, user_id:userId, invited_by:userId, role:user?.primary_role || 'Member', status:'accepted'}).select('status').maybeSingle();
+      setBusy(false);
+      const joinError = result.error;
+      const blocked = !joinError && result.data?.status !== 'accepted';
+      if (joinError || blocked) setError(!joinError || schemaMissing(joinError) || joinError.code === '42501' || /row-level security/i.test(joinError.message || '') ? 'Run the latest LikeMinds SQL update before joining a featured project.' : joinError.message);
+      else { setNotice('You joined. This project is now under Projects on your profile.'); void load(); }
+      return;
+    }
     const {error:insertError} = await client.from('project_members').insert({project_id:id, user_id:userId, invited_by:userId, role:user?.primary_role || 'Member', status:'invited'});
     setBusy(false);
     if (insertError) setError(insertError.message); else { setNotice('Join request sent. You are not on the team until it is accepted.'); void load(); }
@@ -115,7 +126,7 @@ function ProjectScreen(){
       </div>
       <div className="lm-actions">
         <Link className="lm-btn" href={'/explore?tab=people&project=' + project.id}>Find people</Link>
-        {!member && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Request to join</button>}
+        {member?.status !== 'accepted' && project.owner_id !== userId && (project.featured || !member) && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>{project.featured ? 'Join' : 'Request to join'}</button>}
       </div>
     </div>}
     {tab === 'team' && <div>

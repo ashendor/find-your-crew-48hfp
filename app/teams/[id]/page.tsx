@@ -11,6 +11,12 @@ import '../../platform.css';
 
 type Member = {id:string;user_id:string;role:string;status:string};
 
+function PersonRow({person,fallback,detail}:{person?:Creator;fallback:string;detail:string}){
+  const body = <>{person?.avatar_url ? <img src={person.avatar_url} alt="" /> : <span className="lm-avatar">{(person?.display_name || fallback).slice(0,1)}</span>}<div><strong>{person?.display_name || fallback}</strong><p>{detail}</p></div></>;
+  if (person?.username) return <Link className="lm-rowitem" href={'/creators/' + encodeURIComponent(person.username)}>{body}</Link>;
+  return <article className="lm-rowitem">{body}</article>;
+}
+
 function TeamScreen(){
   const {id} = useParams<{id:string}>();
   const {client,user,userId,loading} = useCrewUser();
@@ -64,14 +70,13 @@ function TeamScreen(){
       <p className="lm-kicker">Team</p>
       <h1>{team.name}</h1>
     </header>
-    {team.description && <p>{team.description}</p>}
+    <div className="lm-card" style={{marginTop:16}}><p>{team.description || 'A team can work on more than one project. People join only when they accept an invitation.'}</p></div>
     {error && <p className="lm-alert" role="alert">{error}</p>}
     {notice && <p className="lm-note" role="status">{notice}</p>}
     <section>
       <div className="lm-section"><h2>People</h2></div>
-      <article className="lm-rowitem"><span className="lm-avatar">{(people[team.owner_id]?.display_name || 'L').slice(0,1)}</span><div><strong>{people[team.owner_id]?.display_name || 'Owner'}</strong><p>Owner</p></div></article>
-      {members.map(member => <article className="lm-rowitem" key={member.id}><span className="lm-avatar">{(people[member.user_id]?.display_name || 'M').slice(0,1)}</span><div><strong>{people[member.user_id]?.display_name || 'Member'}</strong><p>{member.role} · {member.status}</p></div></article>)}
-      {!members.length && <p className="lm-muted">No invitations yet. Connecting with someone does not add them here.</p>}
+      <PersonRow person={people[team.owner_id]} fallback="Owner" detail="Owner" />
+      {members.filter(member => member.status === 'accepted' || member.status === 'invited').map(member => <PersonRow key={member.id} person={people[member.user_id]} fallback="Member" detail={member.status === 'invited' ? 'Invited · ' + member.role : member.role || 'Member'} />)}
       {owner && <form className="lm-card lm-form" style={{marginTop:18}} onSubmit={e => void invite(e)}>
         <h2>Invite someone</h2>
         <label>Handle<input className="lm-field" name="handle" required placeholder="username" /></label>

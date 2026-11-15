@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {useRouter,useSearchParams} from 'next/navigation';
 import {PlatformShell} from '@/components/PlatformNav';
 import ProfilePanels from '@/components/ProfilePanels';
+import ProjectBadges from '@/components/ProjectBadges';
 import SocialIcon from '@/components/SocialIcon';
 import PlatformBoard from '@/components/PlatformBoard';
 import Tabs from '@/components/Tabs';
@@ -144,6 +145,7 @@ function ProfilePage(){
     <div className="lm-identity">{form.avatar_url?<img src={form.avatar_url} alt=""/>:<span className="lm-avatar">{(form.display_name||'L').slice(0,1)}</span>}
       <h2>{form.display_name||'Your profile'}</h2>
       <p className="lm-role">{form.primary_role||'Creator'}{form.location?' · '+form.location:''}</p>
+      {userId&&<ProjectBadges userId={userId} />}
       {(form.bio||form.headline)&&<p className="lm-bio">{form.bio||form.headline}</p>}
     </div>
     <Tabs label="Profile" current={tab} items={[{id:'work', label:'Work', href:'/profile?tab=work'},{id:'projects', label:'Projects', href:'/profile?tab=projects'},{id:'teams', label:'Teams', href:'/profile?tab=teams'}]} />
