@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {PlatformShell} from '@/components/PlatformNav';
+import {FilmLoader} from '@/components/FilmLoader';
 import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
@@ -26,7 +27,7 @@ export default function TeamsPage(){
       setTeams([...map.values()]);
     });
   }, [client, userId]);
-  if (loading || !user) return <main className="lm-page"><div className="lm-main">Opening teams…</div></main>;
+  if (loading || !user) return <FilmLoader delay={600} />;
   return <PlatformShell>
     <header className="lm-top"><BackButton fallback="/profile?tab=teams" /><h1 className="lm-bar-title">Teams</h1><HeaderActions /></header>
     {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? 'You lead this team' : 'Member')}</p></div></Link>)}

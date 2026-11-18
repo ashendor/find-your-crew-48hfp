@@ -2,6 +2,7 @@
 import {FormEvent,useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import CrewNav from '@/components/CrewNav';
+import {FilmLoader} from '@/components/FilmLoader';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Connection,Creator} from '@/lib/crew-types';
 import '../crew-app.css';
@@ -29,7 +30,7 @@ export default function Connections(){
  async function send(e:FormEvent){e.preventDefault();if(!client||!thread||!body.trim()||busy)return;setBusy(true);setError('');
  const {data,error:e2}=await client.from('messages').insert({connection_id:thread.id,sender_id:userId,body:body.trim().slice(0,2000)}).select().single();
  setBusy(false);if(e2)setError(e2.message);else{setMessages(v=>[...v,data as Message]);setBody('')}}
- if(loading||!user)return <main className="fc-app"><div className="fc-main">Opening your connections…</div></main>;
+ if(loading||!user)return <FilmLoader delay={600} />;
  const other=(c:Connection)=>people[c.requester_id===userId?c.recipient_id:c.requester_id];
  return <main className="fc-app fc-app--cinematic fc-workspace-page"><CrewNav userName={user.display_name}/><div className="fc-main"><p className="fc-eyebrow">COLLABORATION STARTS WITH HELLO</p><h1 className="fc-display">Your <em>connections.</em></h1><p className="fc-lead">Good films need good people. Accept connection requests, follow up with creators and make plans to collaborate.</p>
  {error&&<p className="fc-error" role="alert">{error}</p>}{notice&&<p className="fc-notice" role="status">{notice}</p>}

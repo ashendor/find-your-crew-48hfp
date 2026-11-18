@@ -3,7 +3,8 @@ import {FormEvent, useEffect, useState} from 'react';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {getCrewSupabase} from '@/lib/crew-supabase';
-import type {Creator, Project} from '@/lib/crew-types';
+import {armLoader} from '@/components/RouteLoader';
+import {projectTitle,type Creator,type Project} from '@/lib/crew-types';
 
 const items = [
   {href:'/home', label:'Home'},
@@ -70,7 +71,7 @@ export function WebSide(){
     </nav>
     <Link className="lm-webfeature" href={featured ? '/projects/' + featured.id : '/home'}>
       <img src="/brand/past-jbr-finals.jpg" alt="" />
-      <span>{featured?.name || 'Featured project'}<em aria-hidden="true">→</em></span>
+      <span>{featured ? projectTitle(featured) : 'Featured project'}<em aria-hidden="true">→</em></span>
     </Link>
   </aside>;
 }
@@ -82,16 +83,16 @@ export function WebTop(){
   useEffect(() => { setText(new URLSearchParams(window.location.search).get('q') || ''); }, []);
   function search(e:FormEvent){
     e.preventDefault();
-    const tab = new URLSearchParams(window.location.search).get('tab');
     const next = new URLSearchParams();
     if (text.trim()) next.set('q', text.trim());
-    if (tab === 'projects') next.set('tab', 'projects');
-    router.push('/explore' + (next.toString() ? '?' + next.toString() : ''));
+    const dest = '/explore' + (next.toString() ? '?' + next.toString() : '');
+    if (dest !== window.location.pathname + window.location.search) armLoader();
+    router.push(dest);
   }
   return <div className="lm-webtop">
     <form onSubmit={search}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8178" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-      <input aria-label="Search creators, skills or projects" placeholder="Search creators, skills or projects" value={text} onChange={e => setText(e.target.value)} />
+      <input aria-label="Search creators or skills" placeholder="Search creators or skills" value={text} onChange={e => setText(e.target.value)} />
     </form>
     <Link className="lm-iconbtn" href="/inbox" aria-label="Notifications"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>{dot && <span className="lm-dot"/>}</Link>
     <Link className="lm-webme" href="/profile" aria-label="Profile">{me?.avatar_url ? <img src={me.avatar_url} alt="" /> : <span>{(me?.display_name || 'L').slice(0,1)}</span>}</Link>

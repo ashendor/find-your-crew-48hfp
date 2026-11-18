@@ -1,13 +1,15 @@
 'use client';
-import {FormEvent,Suspense,useCallback,useEffect,useState} from 'react';
+import {FormEvent,Suspense,useCallback,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {useParams} from 'next/navigation';
 import {PlatformShell} from '@/components/PlatformNav';
+import {FilmLoader} from '@/components/FilmLoader';
 import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
-import {schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
+import {OFFICIAL_TEAM_URL,ROLES,projectTitle,schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
+import ChatThread from '@/components/ChatThread';
 import '../../platform.css';
 
 type Member = {id:string;user_id:string;role:string;status:string;invited_by:string|null};
@@ -27,6 +29,8 @@ function ProjectScreen(){
   const [error,setError] = useState('');
   const [notice,setNotice] = useState('');
   const [busy,setBusy] = useState(false);
+  const [chatDraft,setChatDraft] = useState('');
+  const sending = useRef(false);
   const load = useCallback(async () => {
     if (!client || !id) return;
     const {data,error:projectError} = await client.from('projects').select('*').eq('id', id).maybeSingle();
@@ -48,14 +52,28 @@ function ProjectScreen(){
     }
   }, [client, id, userId]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get('tab');
+    if (asked === 'overview' || asked === 'team' || asked === 'links' || asked === 'chat') setTab(asked);
+  }, []);
   const member = members.find(item => item.user_id === userId);
   const canChat = project?.owner_id === userId || member?.status === 'accepted';
   useEffect(() => {
     if (!client || !canChat) return;
-    void client.from('project_messages').select('*').eq('project_id', id).order('created_at').then(({data}) => setChats((data || []) as Chat[]));
+    let cancelled = false;
+    void client.from('project_messages').select('*').eq('project_id', id).order('created_at').then(({data}) => {
+      if (cancelled) return;
+      const rows = (data || []) as Chat[];
+      setChats(current => {
+        const pendingLocal = current.filter(item => item.id.startsWith('local-'));
+        const newer = current.filter(item => !item.id.startsWith('local-') && !rows.some(row => row.id === item.id));
+        return [...rows, ...newer, ...pendingLocal];
+      });
+    });
+    return () => { cancelled = true; };
   }, [client, canChat, id, tab]);
-  if (loading || !user) return <main className="lm-page"><div className="lm-main">Opening project…</div></main>;
-  if (!project) return <PlatformShell><header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header><p className="fc-error">{error || 'Project not found.'}</p></PlatformShell>;
+  if (loading || !user) return <FilmLoader delay={600} />;
+  if (!project) return error ? <PlatformShell><header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header><p className="fc-error">{error}</p></PlatformShell> : <FilmLoader delay={600} />;
 
   async function requestJoin(){
     if (!client || !project) return; setBusy(true); setError('');
@@ -67,12 +85,25 @@ function ProjectScreen(){
       const joinError = result.error;
       const blocked = !joinError && result.data?.status !== 'accepted';
       if (joinError || blocked) setError(!joinError || schemaMissing(joinError) || joinError.code === '42501' || /row-level security/i.test(joinError.message || '') ? 'Run the latest LikeMinds SQL update before joining a featured project.' : joinError.message);
-      else { setNotice('You joined. This project is now under Projects on your profile.'); void load(); }
+      else { setNotice('You joined. This featured project now shows on your profile.'); void load(); }
       return;
     }
     const {error:insertError} = await client.from('project_members').insert({project_id:id, user_id:userId, invited_by:userId, role:user?.primary_role || 'Member', status:'invited'});
     setBusy(false);
     if (insertError) setError(insertError.message); else { setNotice('Join request sent. You are not on the team until it is accepted.'); void load(); }
+  }
+  async function leaveProject(){
+    if (!client || !project || !member || member.status !== 'accepted' || project.owner_id === userId || busy) return;
+    if (!window.confirm('Leave ' + projectTitle(project) + '? You can join again later.')) return;
+    setBusy(true); setError(''); setNotice('');
+    const {error:rpcError} = await client.rpc('leave_project', {p_project:id});
+    if (!rpcError) { setMembers(list => list.filter(item => item.user_id !== userId)); setBusy(false); setNotice('You left this project.'); return; }
+    if (!schemaMissing(rpcError)) { setBusy(false); setError(rpcError.message); return; }
+    const {data,error:deleteError} = await client.from('project_members').delete().eq('id', member.id).eq('user_id', userId).select('id');
+    setBusy(false);
+    if (deleteError || !data?.length) { setError('Run the latest LikeMinds SQL update before you can leave a project.'); return; }
+    setMembers(list => list.filter(item => item.user_id !== userId));
+    setNotice('You left this project.');
   }
   async function invite(e:FormEvent<HTMLFormElement>){
     e.preventDefault(); if (!client) return;
@@ -89,13 +120,26 @@ function ProjectScreen(){
     const {error:insertError} = await client.from('project_links').insert({project_id:id, title:String(form.get('title')), url:String(form.get('url')), created_by:userId});
     if (insertError) setError(insertError.message); else { e.currentTarget.reset(); void load(); }
   }
-  async function sendChat(e:FormEvent<HTMLFormElement>){
-    e.preventDefault(); if (!client || !canChat) return;
-    const form = new FormData(e.currentTarget);
-    const body = String(form.get('body') || '').trim();
+  async function sendChat(){
+    if (!client || !canChat || sending.current) return;
+    const body = chatDraft.trim().slice(0, 2000);
     if (!body) return;
-    const {error:insertError} = await client.from('project_messages').insert({project_id:id, sender_id:userId, body});
-    if (insertError) setError(insertError.message); else { e.currentTarget.reset(); const {data} = await client.from('project_messages').select('*').eq('project_id', id).order('created_at'); setChats((data || []) as Chat[]); }
+    sending.current = true;
+    setBusy(true);
+    setError('');
+    setChatDraft('');
+    const tempId = 'local-' + crypto.randomUUID();
+    setChats(list => [...list, {id:tempId, sender_id:userId, body, created_at:new Date().toISOString()}]);
+    const {data,error:insertError} = await client.from('project_messages').insert({project_id:id, sender_id:userId, body}).select('id,sender_id,body,created_at').single();
+    sending.current = false;
+    setBusy(false);
+    if (insertError || !data) {
+      setChats(list => list.filter(item => item.id !== tempId));
+      setChatDraft(current => current || body);
+      setError(insertError?.message || 'Message was not sent.');
+      return;
+    }
+    setChats(list => list.map(item => item.id === tempId ? data as Chat : item));
   }
   async function linkCrew(crewId:string){
     if (!client || !crewId) return;
@@ -103,31 +147,77 @@ function ProjectScreen(){
     if (insertError) setError(insertError.message); else { setNotice('Team linked to this project. Members were not added automatically.'); void load(); }
   }
 
-  const when = (start?:string|null, end?:string|null) => {
-    if (!start) return 'Dates to be confirmed';
-    const fmt = (value:string) => new Date(value + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-    return !end || end === start ? fmt(start) : fmt(start) + ' – ' + fmt(end);
+  const stamp = (value?:string|null) => {
+    if (!value) return null;
+    const date = new Date(value + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return null;
+    return {
+      month: date.toLocaleDateString('en-GB', {month:'short'}),
+      day: String(date.getDate()),
+      year: String(date.getFullYear()),
+      full: date.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'}),
+    };
   };
+  const start = stamp(project.starts_on);
+  const end = stamp(project.ends_on);
+  const lines = (project.description || '')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/\b42HR Project\b/g, projectTitle(project))
+    .split(/(?<=[.!?])\s+/)
+    .map(line => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const about = lines.filter(line => !/official link|register the team|48hourfilm|team name|accepting the request|does not add|not add anyone/i.test(line));
+  const joining = lines.filter(line => /accepting the request|does not add|not add anyone/i.test(line));
+  const officialHost = OFFICIAL_TEAM_URL.replace(/^https?:\/\/(?:www\.)?/, '');
   return <PlatformShell>
     <header className="lm-top"><BackButton fallback="/home" /><HeaderActions /></header>
     <header className="lm-pagehead">
       <p className="lm-kicker">{project.featured ? 'Featured project' : 'Project'}</p>
-      <h1>{project.name}</h1>
+      <h1>{projectTitle(project)}</h1>
     </header>
     <Tabs label="Project" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'overview', label:'Overview'},{id:'team', label:'Team'},{id:'links', label:'Links'},{id:'chat', label:'Chat'}]} />
     {error && <p className="lm-alert" role="alert">{error}</p>}
     {notice && <p className="lm-note" role="status">{notice}</p>}
-    {tab === 'overview' && <div className="lm-card">
-      <p>{project.description}</p>
-      <div className="lm-facts">
-        <div><span>Dates</span><p>{when(project.starts_on, project.ends_on)}</p></div>
-        <div><span>Team name</span><p>{project.team_name_required ? 'Required when you connect for this project.' : 'Optional.'}</p></div>
-        {!!project.required_roles?.length && <div><span>Roles</span><div className="lm-pills">{project.required_roles.map(role => <span key={role}>{role}</span>)}</div></div>}
-      </div>
+    {tab === 'overview' && <div className="lm-card lm-brief">
+      <section className="lm-when">
+        <h2>Dates</h2>
+        {start ? <div className="lm-dates">
+          <div className="lm-datechip" aria-hidden="true"><b>{start.month}</b><strong>{start.day}</strong><small>{start.year}</small></div>
+          {end && end.full !== start.full && <><span className="lm-date-to">to</span><div className="lm-datechip" aria-hidden="true"><b>{end.month}</b><strong>{end.day}</strong><small>{end.year}</small></div></>}
+          <p>{end && end.full !== start.full ? start.full + ' to ' + end.full : start.full}</p>
+        </div> : <p>Dates to be confirmed</p>}
+      </section>
+      {!!about.length && <section>
+        <h2>About</h2>
+        <ul className="lm-points">{about.map(line => <li key={line}>{line}</li>)}</ul>
+      </section>}
+      {project.featured && <section>
+        <h2>Official registration</h2>
+        <p>When the team is ready, register it on the official site.</p>
+        <a className="lm-linkrow" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer">
+          <span className="lm-linkmark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 5h5v5"/><path d="M19 5 10 14"/><path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5"/></svg></span>
+          <span><strong>Register your team</strong><small>{officialHost}</small></span>
+          <em aria-hidden="true">↗</em>
+        </a>
+      </section>}
+      <section>
+        <h2>Team name</h2>
+        <p>{project.team_name_required ? 'Required for this project.' : 'Optional for this project.'}</p>
+      </section>
+      {!!joining.length && <section>
+        <h2>Joining</h2>
+        <ul className="lm-points">{joining.map(line => <li key={line}>{line}</li>)}</ul>
+      </section>}
+      {!!project.required_roles?.length && <section>
+        <h2>Roles</h2>
+        <div className="lm-pills">{project.required_roles.map(role => <span key={role}>{role}</span>)}</div>
+      </section>}
       <div className="lm-actions">
-        <Link className="lm-btn" href={'/explore?tab=people&project=' + project.id}>Find people</Link>
-        {member?.status !== 'accepted' && project.owner_id !== userId && (project.featured || !member) && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>{project.featured ? 'Join' : 'Request to join'}</button>}
+        <Link className="lm-btn" href="/explore">Find people</Link>
+        {project.featured && <a className="lm-btn" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer">Register your team</a>}
+        {project.featured && member?.status !== 'accepted' && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Join</button>}
       </div>
+      {member?.status === 'accepted' && project.owner_id !== userId && <button className="lm-danger" type="button" disabled={busy} onClick={() => void leaveProject()}>Leave this project</button>}
     </div>}
     {tab === 'team' && <div>
       {members.map(item => <article className="lm-rowitem" key={item.id}>{people[item.user_id]?.avatar_url ? <img src={people[item.user_id].avatar_url || ''} alt="" /> : <span className="lm-avatar">{(people[item.user_id]?.display_name || 'C').slice(0,1)}</span>}<div><strong>{people[item.user_id]?.display_name || 'Creator'}</strong><p>{item.role} · {item.status}</p></div></article>)}
@@ -135,10 +225,10 @@ function ProjectScreen(){
       {project.owner_id === userId && <form className="lm-card lm-form" style={{marginTop:18}} onSubmit={e => void invite(e)}>
         <h2>Invite a creator</h2>
         <label>Handle<input className="lm-field" name="handle" required placeholder="username" /></label>
-        <label>Role<input className="lm-field" name="role" defaultValue="Member" /></label>
+        <label>Role<select className="lm-field" name="role" defaultValue="Producer">{ROLES.map(role => <option key={role}>{role}</option>)}</select></label>
         <button className="lm-btn" type="submit">Send invitation</button>
       </form>}
-      {crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Link a team you own
+      {project.featured && crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Register a team you own
         <select className="lm-field" defaultValue="" onChange={e => void linkCrew(e.target.value)}>
           <option value="">Choose a team</option>
           {crews.filter(crew => !linked.includes(crew.id)).map(crew => <option key={crew.id} value={crew.id}>{crew.name}</option>)}
@@ -155,16 +245,10 @@ function ProjectScreen(){
         <button className="lm-btn" type="submit">Add link</button>
       </form>}
     </div>}
-    {tab === 'chat' && <div>
-      {canChat ? <>
-        {chats.map(chat => <p key={chat.id} className={chat.sender_id === userId ? 'lm-bubble mine' : 'lm-bubble'}><b>{people[chat.sender_id]?.display_name || (chat.sender_id === userId ? 'You' : 'Member')}</b><br/>{chat.body}</p>)}
-        {!chats.length && <div className="lm-empty"><strong>No messages yet</strong><p>This chat is only for people already on the project.</p></div>}
-        <form onSubmit={e => void sendChat(e)} className="lm-row" style={{marginTop:14}}><input className="lm-field" name="body" aria-label="Group message" placeholder="Message the team" /><button className="lm-btn" type="submit">Send</button></form>
-      </> : <div className="lm-empty"><strong>Chat is for the team</strong><p>You can read and write here after a join request is accepted.</p></div>}
-    </div>}
+    {tab === 'chat' && (canChat ? <ChatThread embed title={projectTitle(project)} subtitle="Project chat" avatar={<span className="lm-avatar">{projectTitle(project).slice(0,1)}</span>} messages={chats} mine={userId} names={Object.fromEntries(Object.entries(people).map(([key, person]) => [key, person.display_name]))} draft={chatDraft} onDraft={setChatDraft} onSend={() => void sendChat()} busy={busy} empty="No messages yet. This chat is only for people already on the project." placeholder="Message" /> : <div className="lm-empty"><strong>Chat is for the team</strong><p>You can read and write here after a join request is accepted.</p></div>)}
   </PlatformShell>;
 }
 
 export default function ProjectPage(){
-  return <Suspense fallback={<main className="lm-page"><div className="lm-frame"><div className="lm-main">Opening project…</div></div></main>}><ProjectScreen /></Suspense>;
+  return <Suspense fallback={<FilmLoader delay={600} />}><ProjectScreen /></Suspense>;
 }

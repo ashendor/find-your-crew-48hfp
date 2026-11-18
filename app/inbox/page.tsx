@@ -1,11 +1,13 @@
 'use client';
-import {FormEvent,useCallback,useEffect,useState} from 'react';
+import {FormEvent,useCallback,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {PlatformShell} from '@/components/PlatformNav';
+import {FilmLoader} from '@/components/FilmLoader';
 import HeaderActions from '@/components/HeaderActions';
 import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
-import {schemaMissing,type Connection,type Creator,type Project} from '@/lib/crew-types';
+import {projectTitle,schemaMissing,type Connection,type Creator,type Project} from '@/lib/crew-types';
+import ChatThread from '@/components/ChatThread';
 import '../platform.css';
 
 type Message = {id:string;connection_id?:string;project_id?:string;sender_id:string;body:string;created_at:string};
@@ -32,11 +34,13 @@ export default function InboxPage(){
   const [seen,setSeen] = useState<Record<string,string>>({});
   const [messages,setMessages] = useState<Message[]>([]);
   const [draft,setDraft] = useState('');
+  const [query,setQuery] = useState('');
   const [busy,setBusy] = useState(false);
   const [notice,setNotice] = useState('');
   const [error,setError] = useState('');
   const [pending,setPending] = useState<ChatTarget|null>(null);
   const [hides,setHides] = useState<Record<string,string>>({});
+  const sending = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!client || !userId) return;
@@ -73,7 +77,7 @@ export default function InboxPage(){
     ]);
     const joinedProjects = ((memberProjects.data || []) as {projects:Project|Project[]|null}[]).map(row => Array.isArray(row.projects) ? row.projects[0] : row.projects).filter(Boolean) as Project[];
     const chatMap = new Map<string,Project>();
-    for (const project of [...((ownedProjects.data || []) as Project[]), ...joinedProjects]) chatMap.set(project.id, project);
+    for (const project of [...((ownedProjects.data || []) as Project[]), ...joinedProjects]) if (project.featured) chatMap.set(project.id, project);
     setProjectChats([...chatMap.values()]);
     const projectMap: Record<string, Message> = {};
     const chatIds = [...chatMap.keys()];
@@ -123,7 +127,17 @@ export default function InboxPage(){
 
   useEffect(() => {
     if (!client || !active) { setMessages([]); return; }
-    void client.from('messages').select('*').eq('connection_id', active.id).order('created_at').then(({data}) => setMessages((data || []) as Message[]));
+    let cancelled = false;
+    void client.from('messages').select('*').eq('connection_id', active.id).order('created_at').then(({data}) => {
+      if (cancelled) return;
+      const rows = (data || []) as Message[];
+      setMessages(current => {
+        const pendingLocal = current.filter(item => item.id.startsWith('local-') && item.connection_id === active.id);
+        const newer = current.filter(item => !item.id.startsWith('local-') && item.connection_id === active.id && !rows.some(row => row.id === item.id));
+        return [...rows, ...newer, ...pendingLocal];
+      });
+    });
+    return () => { cancelled = true; };
   }, [client, active]);
 
   async function respond(id:string, status:'accepted'|'declined'){
@@ -141,28 +155,40 @@ export default function InboxPage(){
     const {error:updateError} = await client.from(table).update({status}).eq('id', invite.id).eq('user_id', userId);
     setBusy(false);
     if (updateError) setError(updateError.message);
-    else { setNotice(status === 'accepted' ? 'Invitation accepted.' : 'Invitation declined.'); void refresh(); }
+    else { setNotice(status === 'accepted' ? (invite.kind === 'crew' ? 'You are part of the team.' : 'Invitation accepted.') : 'Invitation declined.'); void refresh(); }
   }
-  async function send(e:FormEvent){
-    e.preventDefault();
-    if (!client || !active || !draft.trim()) return;
+  async function send(e?:FormEvent){
+    e?.preventDefault();
+    const body = draft.trim().slice(0, 2000);
+    if (!client || !active || !body || sending.current) return;
+    sending.current = true;
     setBusy(true);
-    const {data,error:sendError} = await client.from('messages').insert({connection_id:active.id, sender_id:userId, body:draft.trim().slice(0,2000)}).select().single();
+    setError('');
+    const tempId = 'local-' + crypto.randomUUID();
+    const optimistic: Message = {id:tempId, connection_id:active.id, sender_id:userId, body, created_at:new Date().toISOString()};
+    setMessages(list => [...list, optimistic]);
+    setDraft('');
+    setLatest(prev => ({...prev, [active.id]: optimistic}));
+    const {data,error:sendError} = await client.from('messages').insert({connection_id:active.id, sender_id:userId, body}).select().single();
+    sending.current = false;
     setBusy(false);
-    if (sendError) setError(sendError.message);
-    else {
-      setMessages(list => [...list, data as Message]);
-      setDraft('');
-      setLatest(prev => ({...prev, [active.id]: data as Message}));
-      setHides(prev => {
-        if (!prev['dm:' + active.id]) return prev;
-        const next = {...prev};
-        delete next['dm:' + active.id];
-        localStorage.setItem(HIDE_KEY, JSON.stringify(next));
-        return next;
-      });
-      void client.from('direct_chat_hides').delete().eq('user_id', userId).eq('connection_id', active.id);
+    if (sendError || !data) {
+      setMessages(list => list.filter(item => item.id !== tempId));
+      setDraft(current => current || body);
+      setError(sendError?.message || 'Message was not sent.');
+      return;
     }
+    const saved = data as Message;
+    setMessages(list => list.map(item => item.id === tempId ? saved : item));
+    setLatest(prev => ({...prev, [active.id]: saved}));
+    setHides(prev => {
+      if (!prev['dm:' + active.id]) return prev;
+      const next = {...prev};
+      delete next['dm:' + active.id];
+      localStorage.setItem(HIDE_KEY, JSON.stringify(next));
+      return next;
+    });
+    void client.from('direct_chat_hides').delete().eq('user_id', userId).eq('connection_id', active.id);
   }
   function rememberHide(key:string, stamp:string){
     setHides(prev => {
@@ -208,7 +234,7 @@ export default function InboxPage(){
     setPending(null);
     setNotice('Removed from your inbox. The other person still has the messages.');
   }
-  if (loading || !user) return <main className="lm-page"><div className="lm-main">Opening Inbox…</div></main>;
+  if (loading || !user) return <FilmLoader delay={600} />;
   const other = (item:Connection) => people[item.requester_id === userId ? item.recipient_id : item.requester_id];
   const ago = (iso:string) => {
     const minutes = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -221,40 +247,65 @@ export default function InboxPage(){
   const face = (person?:Creator) => person?.avatar_url ? <img src={person.avatar_url} alt="" /> : <span className="lm-avatar">{(person?.display_name || '?').slice(0,1)}</span>;
   const group = <span className="lm-avatar lm-group" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="9" cy="9" r="2.2"/><circle cx="16" cy="10" r="1.8"/><path d="M4.5 17.5c.7-2.2 2.2-3.3 4.5-3.3s3.8 1.1 4.5 3.3M13 17.5c.5-1.6 1.6-2.5 3.2-2.5 1.4 0 2.5.7 3.1 2"/></svg></span>;
   const isUnread = (id:string, message?:Message) => !!message && message.sender_id !== userId && seen[id] !== message.created_at;
-  const openThread = (id:string) => {
-    setThread(id);
-    const stamp = latest[id]?.created_at;
-    if (!stamp) return;
-    setSeen(prev => { const next = {...prev, [id]: stamp}; sessionStorage.setItem('lm:inbox-seen', JSON.stringify(next)); return next; });
-  };
   const concealed = (key:string, at:string) => !!hides[key] && +new Date(at) <= +new Date(hides[key]);
   const conversations = [
     ...accepted.map(item => ({kind:'dm' as const, id:item.id, at: latest[item.id]?.created_at || item.created_at, item})),
     ...projectChats.map(project => ({kind:'project' as const, id:project.id, at: projectLatest[project.id]?.created_at || project.created_at, project})),
   ].filter(row => !concealed(row.kind + ':' + row.id, row.at)).sort((a, b) => +new Date(b.at) - +new Date(a.at));
+  const openThread = (id:string) => {
+    setThread(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set('chat', id);
+    window.history.replaceState(null, '', url.pathname + url.search);
+    const stamp = latest[id]?.created_at;
+    if (!stamp) return;
+    setSeen(prev => { const next = {...prev, [id]: stamp}; sessionStorage.setItem('lm:inbox-seen', JSON.stringify(next)); return next; });
+  };
+  const closeThread = () => {
+    setThread(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('chat');
+    window.history.replaceState(null, '', url.pathname + (url.search || ''));
+  };
+  const needle = query.trim().toLowerCase();
+  const visible = conversations.filter(row => {
+    if (!needle) return true;
+    if (row.kind === 'dm') {
+      const person = other(row.item);
+      return (person?.display_name || '').toLowerCase().includes(needle) || (latest[row.id]?.body || '').toLowerCase().includes(needle);
+    }
+    return projectTitle(row.project).toLowerCase().includes(needle) || (projectLatest[row.id]?.body || '').toLowerCase().includes(needle);
+  });
+  const line = (last:Message|undefined, fallback:string) => !last ? fallback : (last.sender_id === userId ? 'You: ' : '') + last.body.replace(/\s+/g, ' ');
+  const person = active ? other(active) : undefined;
+  const threadOpen = tab === 'messages' && !!active;
   return <PlatformShell>
+    <div className={'lm-inbox-screen' + (tab === 'messages' ? ' is-split' : '') + (threadOpen ? ' is-open' : '')}>
+    <div className="lm-inbox-pane">
     <header className="lm-top lm-inbox-head"><h1>Inbox</h1><HeaderActions /></header>
-    <Tabs label="Inbox" current={tab} onChange={item => { setTab(item as typeof tab); setThread(null); }} items={[{id:'messages', label:'Messages'},{id:'requests', label:'Requests', dot:requests.length > 0},{id:'invites', label:'Invites'}]} />
-    {error && <p className="fc-error" role="alert">{error}</p>}
-    {notice && <p className="lm-note" role="status">{notice}</p>}
-    {tab === 'messages' && !active && <div className="lm-inbox">
-      {conversations.map(row => {
+    <Tabs label="Inbox" current={tab} onChange={item => { setTab(item as typeof tab); closeThread(); }} items={[{id:'messages', label:'Messages'},{id:'requests', label:'Requests', dot:requests.length > 0},{id:'invites', label:'Invites'}]} />
+    {error && !threadOpen && <p className="fc-error" role="alert">{error}</p>}
+    {notice && !threadOpen && <p className="lm-note" role="status">{notice}</p>}
+    {tab === 'messages' && <div className="lm-inbox">
+      {conversations.length > 0 && <label className="lm-find-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8178" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input aria-label="Search conversations" placeholder="Search conversations" value={query} onChange={e => setQuery(e.target.value)} />
+      </label>}
+      {visible.map(row => {
         if (row.kind === 'dm') {
           const person = other(row.item);
           const last = latest[row.id];
           const name = person?.display_name || 'Creator';
-          return <div className="lm-inbox-row" key={row.id}><button className="lm-inbox-open" type="button" onClick={() => openThread(row.id)}>{face(person)}<div><strong>{name}</strong><p>{last?.body || preview(row.item)}</p></div></button><div className="lm-inbox-meta"><time>{ago(row.at)}</time>{isUnread(row.id, last) && <i className="lm-unread" aria-label="Unread"/>}<button className="lm-inbox-delete" type="button" onClick={() => setPending({kind:'dm', id:row.id, name})}>Delete</button></div></div>;
+          const unread = isUnread(row.id, last);
+          return <div className={'lm-inbox-row' + (unread ? ' is-unread' : '') + (thread === row.id ? ' is-active' : '')} key={row.id}><button className="lm-inbox-open" type="button" onClick={() => openThread(row.id)}>{face(person)}<div><strong>{name}</strong><p>{line(last, preview(row.item))}</p></div></button><div className="lm-inbox-meta"><time>{ago(row.at)}</time>{unread && <i className="lm-unread" aria-label="Unread"/>}<button className="lm-inbox-delete" type="button" aria-label={'Delete chat with ' + name} onClick={() => setPending({kind:'dm', id:row.id, name})}>×</button></div></div>;
         }
         const last = projectLatest[row.id];
-        return <div className="lm-inbox-row" key={row.id}><Link className="lm-inbox-open" href={'/projects/' + row.id} onClick={() => { if (!last) return; setSeen(prev => { const next = {...prev, ['project:' + row.id]: last.created_at}; sessionStorage.setItem('lm:inbox-seen', JSON.stringify(next)); return next; }); }}>{group}<div><strong>{row.project.name}</strong><p>{last?.body || 'Project chat'}</p></div></Link><div className="lm-inbox-meta"><time>{ago(row.at)}</time>{isUnread('project:' + row.id, last) && <i className="lm-unread" aria-label="Unread"/>}<button className="lm-inbox-delete" type="button" onClick={() => setPending({kind:'project', id:row.id, name:row.project.name})}>Delete</button></div></div>;
+        const title = projectTitle(row.project);
+        const unread = isUnread('project:' + row.id, last);
+        return <div className={'lm-inbox-row' + (unread ? ' is-unread' : '')} key={row.id}><Link className="lm-inbox-open" href={'/projects/' + row.id + '?tab=chat'} onClick={() => { if (!last) return; setSeen(prev => { const next = {...prev, ['project:' + row.id]: last.created_at}; sessionStorage.setItem('lm:inbox-seen', JSON.stringify(next)); return next; }); }}>{group}<div><strong>{title}</strong><p>{line(last, 'Project chat')}</p></div></Link><div className="lm-inbox-meta"><time>{ago(row.at)}</time>{unread && <i className="lm-unread" aria-label="Unread"/>}<button className="lm-inbox-delete" type="button" aria-label={'Remove ' + title} onClick={() => setPending({kind:'project', id:row.id, name:title})}>×</button></div></div>;
       })}
       {!conversations.length && <div className="lm-empty"><strong>No conversations yet</strong><p>Connect with someone first. Accepting a request opens a chat and nothing else.</p><Link className="lm-btn" href="/explore">Find people</Link></div>}
-    </div>}
-    {tab === 'messages' && active && <div className="lm-thread">
-      <div className="lm-thread-bar"><button className="lm-choice" type="button" onClick={() => setThread(null)}>‹ {other(active)?.display_name}</button><button className="lm-inbox-delete" type="button" onClick={() => setPending({kind:'dm', id:active.id, name:other(active)?.display_name || 'Creator'})}>Delete</button></div>
-      {messages.map(message => <p key={message.id} className={message.sender_id === userId ? 'lm-bubble mine' : 'lm-bubble'}>{message.body}</p>)}
-      {!messages.length && <p className="lm-muted">Say hello. This chat does not add anyone to a team or a project.</p>}
-      <form onSubmit={e => void send(e)} className="lm-row"><input className="lm-field" value={draft} onChange={e => setDraft(e.target.value)} aria-label="Message" placeholder="Message" /><button className="lm-btn" disabled={busy || !draft.trim()}>Send</button></form>
+      {!!conversations.length && !visible.length && <p className="lm-muted">No conversation matches that search.</p>}
     </div>}
     {tab === 'requests' && <>
       {requests.map(item => <article key={item.id}>
@@ -270,6 +321,26 @@ export default function InboxPage(){
       </article>)}
       {!invites.length && <div className="lm-empty"><strong>No invitations</strong><p>Team and project invites show up here. They are separate from connection requests.</p></div>}
     </>}
+    </div>
+    {threadOpen && active && <ChatThread
+      title={person?.display_name || 'Creator'}
+      subtitle={person?.primary_role || 'Direct message'}
+      avatar={face(person)}
+      messages={messages}
+      mine={userId}
+      draft={draft}
+      onDraft={setDraft}
+      onSend={() => void send()}
+      busy={busy}
+      onBack={closeThread}
+      onMore={() => setPending({kind:'dm', id:active.id, name:person?.display_name || 'Creator'})}
+      empty="Say hello. This chat does not add anyone to a team or a project."
+      placeholder="Message"
+      alert={error}
+      note={notice}
+    />}
+    {tab === 'messages' && !threadOpen && <div className="lm-chat-placeholder"><div><strong>Your conversations</strong><p>Choose someone to continue the chat.</p></div></div>}
+    </div>
     {pending && <div className="lm-sheet" role="presentation" onClick={() => setPending(null)}>
       <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-delete-chat" onClick={e => e.stopPropagation()}>
         <div className="lm-grab" aria-hidden="true" />

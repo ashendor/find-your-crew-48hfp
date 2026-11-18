@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
+import { RouteLoader } from "@/components/RouteLoader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col"><Suspense fallback={null}><RouteLoader /></Suspense>{children}</body>
     </html>
   );
 }

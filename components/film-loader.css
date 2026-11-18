@@ -1,0 +1,42 @@
+.fl-wait{min-height:100svh;background:#F6F1E7}
+.fl-screen{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  background:#141210;
+  color:#F6F1E7;
+  overflow:hidden;
+  animation:fl-in .35s ease;
+}
+.fl-screen.is-out{animation:fl-out .28s ease forwards}
+.fl-reel{overflow:hidden;background:#C44832}
+.fl-sprocket{display:flex;width:max-content;will-change:transform}
+.fl-sprocket i{
+  width:16px;height:16px;margin:9px 11px;border-radius:4px;background:#141210;flex:none;display:block;
+}
+.fl-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.fl-iris{width:min(168px,42vw);height:auto;will-change:transform}
+.fl-mark{
+  margin-top:28px;
+  font-family:"Archivo Black",Archivo,Arial,sans-serif;
+  font-size:clamp(28px,7vw,44px);
+  letter-spacing:.14em;
+  line-height:1;
+}
+.fl-mark span{display:inline-block;will-change:transform}
+.fl-kicker{
+  margin-top:12px;
+  font:800 11px Archivo,Arial,sans-serif;
+  letter-spacing:.28em;
+  color:#D9A53F;
+}
+.fl-bar{width:min(180px,46vw);height:2px;margin:22px auto 0;background:#3A342E;overflow:hidden}
+.fl-bar span{display:block;height:100%;background:#C44832;transform:scaleX(0);transform-origin:0 50%;will-change:transform}
+@keyframes fl-in{from{opacity:0}to{opacity:1}}
+@keyframes fl-out{from{opacity:1}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .fl-screen,.fl-screen.is-out{animation:none}
+  .fl-bar span{transform:scaleX(1)}
+}
