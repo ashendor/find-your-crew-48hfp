@@ -82,7 +82,7 @@ function TeamScreen(){
     return members.find(member => member.user_id === personId && member.status !== 'declined');
   }
   function connectionWith(personId:string){
-    return links.find(link => (link.requester_id === userId && link.recipient_id === personId) || (link.recipient_id === userId && link.requester_id === personId));
+    return links.find(link => (link.status === 'pending' || link.status === 'accepted') && ((link.requester_id === userId && link.recipient_id === personId) || (link.recipient_id === userId && link.requester_id === personId)));
   }
 
   async function invitePerson(person:Creator){
@@ -181,7 +181,7 @@ function TeamScreen(){
           return <div key={person.id}>
             <PersonRow person={person} fallback="Person" detail={person.primary_role || person.username} />
             <div className="lm-actions lm-pair">
-              <button className="lm-btn-line" type="button" disabled={busy || !!link} onClick={() => void connectPerson(person)}>{link?.status === 'accepted' ? 'Connected' : link ? 'Request sent' : 'Connect'}</button>
+              <button className="lm-btn-line" type="button" disabled={busy || !!link} onClick={() => void connectPerson(person)}>{link ? 'Connected' : 'Connect'}</button>
               <button className="lm-btn" type="button" disabled={busy || !!spot} onClick={() => void invitePerson(person)}>{spot?.status === 'accepted' ? 'On this team' : spot ? 'Invited' : 'Invite'}</button>
             </div>
           </div>;

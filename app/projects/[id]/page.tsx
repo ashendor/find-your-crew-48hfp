@@ -30,6 +30,7 @@ function ProjectScreen(){
   const [notice,setNotice] = useState('');
   const [busy,setBusy] = useState(false);
   const [chatDraft,setChatDraft] = useState('');
+  const [registerOpen,setRegisterOpen] = useState(false);
   const sending = useRef(false);
   const load = useCallback(async () => {
     if (!client || !id) return;
@@ -194,11 +195,11 @@ function ProjectScreen(){
       {project.featured && <section>
         <h2>Official registration</h2>
         <p>When the team is ready, register it on the official site.</p>
-        <a className="lm-linkrow" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer">
+        <button className="lm-linkrow" type="button" onClick={() => setRegisterOpen(true)}>
           <span className="lm-linkmark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 5h5v5"/><path d="M19 5 10 14"/><path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5"/></svg></span>
           <span><strong>Register your team</strong><small>{officialHost}</small></span>
           <em aria-hidden="true">↗</em>
-        </a>
+        </button>
       </section>}
       <section>
         <h2>Team name</h2>
@@ -214,7 +215,7 @@ function ProjectScreen(){
       </section>}
       <div className="lm-actions">
         <Link className="lm-btn" href="/explore">Find people</Link>
-        {project.featured && <a className="lm-btn" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer">Register your team</a>}
+        {project.featured && <button className="lm-btn" type="button" onClick={() => setRegisterOpen(true)}>Register your team</button>}
         {project.featured && member?.status !== 'accepted' && project.owner_id !== userId && <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void requestJoin()}>Join</button>}
       </div>
       {member?.status === 'accepted' && project.owner_id !== userId && <button className="lm-danger" type="button" disabled={busy} onClick={() => void leaveProject()}>Leave this project</button>}
@@ -246,6 +247,20 @@ function ProjectScreen(){
       </form>}
     </div>}
     {tab === 'chat' && (canChat ? <ChatThread embed title={projectTitle(project)} subtitle="Project chat" avatar={<span className="lm-avatar">{projectTitle(project).slice(0,1)}</span>} messages={chats} mine={userId} names={Object.fromEntries(Object.entries(people).map(([key, person]) => [key, person.display_name]))} draft={chatDraft} onDraft={setChatDraft} onSend={() => void sendChat()} busy={busy} empty="No messages yet. This chat is only for people already on the project." placeholder="Message" /> : <div className="lm-empty"><strong>Chat is for the team</strong><p>You can read and write here after a join request is accepted.</p></div>)}
+    {registerOpen && <div className="lm-sheet" role="presentation" onClick={() => setRegisterOpen(false)}>
+      <div className="lm-sheet-panel lm-register" role="dialog" aria-modal="true" aria-labelledby="lm-register-team" onClick={e => e.stopPropagation()}>
+        <div className="lm-grab" aria-hidden="true" />
+        <h2 id="lm-register-team">This opens another website</h2>
+        <p>Registration happens on the official 48 Hour Film Project site, not on LikeMinds.</p>
+        <ul className="lm-points">
+          <li>Continue only if you have found your team and you are ready to register.</li>
+          <li>Enter the same team name there. Do not use a different name.</li>
+        </ul>
+        {crews.length > 0 && <p>{crews.length === 1 ? 'Your team name here is ' + crews[0].name + '.' : 'Your team names here are ' + crews.map(crew => crew.name).join(', ') + '.'}</p>}
+        <a className="lm-btn" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer" onClick={() => setRegisterOpen(false)}>Continue to the official site</a>
+        <button className="lm-btn-line" type="button" onClick={() => setRegisterOpen(false)}>Stay here</button>
+      </div>
+    </div>}
   </PlatformShell>;
 }
 

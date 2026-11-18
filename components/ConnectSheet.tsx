@@ -3,7 +3,7 @@ import {FormEvent,useEffect,useState} from 'react';
 import {getCrewSupabase} from '@/lib/crew-supabase';
 import type {Crew} from '@/lib/crew-types';
 
-export default function ConnectSheet({open,onClose,recipientId,recipientName,recipientAvatar}:{open:boolean;onClose:()=>void;recipientId:string;recipientName:string;recipientAvatar?:string}){
+export default function ConnectSheet({open,onClose,onSent,recipientId,recipientName,recipientAvatar}:{open:boolean;onClose:()=>void;onSent?:()=>void;recipientId:string;recipientName:string;recipientAvatar?:string}){
   const client = getCrewSupabase();
   const [purpose,setPurpose] = useState<'network'|'crew'>('network');
   const [crews,setCrews] = useState<Crew[]>([]);
@@ -44,7 +44,7 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,rec
     });
     setBusy(false);
     if (insertError) setError(insertError.code === '23505' ? 'A connection already exists or is waiting for a reply.' : insertError.message);
-    else onClose();
+    else { onSent?.(); onClose(); }
   }
 
   return <div className="lm-sheet lm-connect" role="presentation" onClick={onClose}>
