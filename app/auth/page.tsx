@@ -4,16 +4,12 @@ import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCrewSupabase } from '@/lib/crew-supabase';
+import { armLoader, clearLoader } from '@/components/RouteLoader';
 import '../profile/creator.css';
 import './auth-modern.css';
 import '../brand-skin.css';
 
-// Do not advertise Google sign-in until the Google Cloud OAuth application
-// and the Supabase Google provider have both been configured.
-const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === 'true';
-
-// Local `next dev` only. Production builds inline NODE_ENV as "production",
-// so the password form is not shown on Vercel. Magic link and Google stay as-is.
+// Production offers Google only. Local `next dev` can still use a password.
 const localPasswordAuth = process.env.NODE_ENV === 'development';
 
 function GoogleMark() {
@@ -29,9 +25,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [emailOpen, setEmailOpen] = useState(!googleEnabled);
+  const [emailOpen, setEmailOpen] = useState(false);
   const router = useRouter();
   const client = getCrewSupabase();
 
@@ -43,13 +38,14 @@ export default function AuthPage() {
   }, [client, router]);
 
   async function signInWithGoogle() {
-    if (!client || busy || !googleEnabled) return;
+    if (!client || busy) return;
     setBusy(true);
     setError('');
     // /profile is already on the production Supabase redirect allowlist.
     // It sends incomplete profiles to onboarding and completed profiles to
     // their editor. Existing accounts and profile IDs are preserved.
     window.sessionStorage.setItem('fc:return-from-signin', '1');
+    armLoader();
     const { error: oauthError } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -58,6 +54,7 @@ export default function AuthPage() {
       },
     });
     if (oauthError) {
+      clearLoader();
       window.sessionStorage.removeItem('fc:return-from-signin');
       setBusy(false);
       setError(oauthError.message);
@@ -80,25 +77,8 @@ export default function AuthPage() {
       setError(authError.message);
       return;
     }
+    armLoader();
     router.push('/profile');
-  }
-
-  async function signInWithEmail(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!client || busy) return;
-    setBusy(true);
-    setError('');
-    window.sessionStorage.setItem('fc:return-from-signin', '1');
-    const { error: authError } = await client.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: window.location.origin + '/profile',
-        shouldCreateUser: true,
-      },
-    });
-    setBusy(false);
-    if (authError) { window.sessionStorage.removeItem('fc:return-from-signin'); setError(authError.message); }
-    else setSent(true);
   }
 
   return <main className="crew-page crew-auth-page crew-auth-reimagined">
@@ -112,39 +92,27 @@ export default function AuthPage() {
         </div>
         <div className="crew-auth-editorial-footer"><span>CREATE <i>✳</i> CONNECT <i>✳</i> COLLABORATE</span><span>48HFP / NOV 27—29</span></div>
       </section>
-      <section className="crew-auth-glass" aria-label="Sign in to your crew">
+      <section className="crew-auth-glass" aria-label="Continue with Google">
         <div className="crew-auth-panel-top"><span>✳ &nbsp; YOUR PASS TO THE CREW</span><span>001 / 001</span></div>
         <div className="crew-auth-panel-main">
           <p className="crew-auth-panel-eyebrow">WELCOME TO YOUR CREATIVE WORLD</p>
-          <h2>{sent ? 'Check your inbox.' : <>Enter the<br/><em>crew.</em></>}</h2>
-          {sent ? <>
-            <p className="crew-auth-message">We sent a secure sign-in link to <strong>{email}</strong>. Open it to join your creative space.</p>
-            <button type="button" className="crew-auth-back-email" onClick={()=>setSent(false)}>← Use another email</button>
-          </> : <>
-            <p className="crew-auth-message">{localPasswordAuth ? 'Local test sign-in. Use an account created in Supabase.' : "One tap and you're in. No passwords. Just possibility."}</p>
-            {googleEnabled&&<button type="button" className="crew-auth-google" disabled={busy||!client} onClick={()=>void signInWithGoogle()}>
-              <GoogleMark/><span>{busy?'Opening Google…':'Continue with Google'}</span><span className="crew-auth-google-arrow" aria-hidden="true">↗</span>
-            </button>}
-            {googleEnabled&&!emailOpen&&<button type="button" className="crew-auth-email-link" onClick={()=>setEmailOpen(true)}>{localPasswordAuth ? <>Prefer email? Use a password <span>↗</span></> : <>Prefer email? Use a sign-in link <span>↗</span></>}</button>}
-            {emailOpen&&localPasswordAuth&&<form className="crew-auth-email-form" onSubmit={signInWithPassword}>
-              <label htmlFor="crew-email">YOUR EMAIL</label>
-              <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
-              <label htmlFor="crew-password">PASSWORD</label>
-              <input id="crew-password" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6}/>
-              <button type="submit" disabled={busy||!client}>{busy?'Signing in…':'Sign in ↗'}</button>
-              {googleEnabled&&<button type="button" className="crew-auth-back-email" onClick={()=>setEmailOpen(false)}>← Back to Google sign-in</button>}
-            </form>}
-            {emailOpen&&!localPasswordAuth&&<form className="crew-auth-email-form" onSubmit={signInWithEmail}>
-              <label htmlFor="crew-email">YOUR EMAIL</label>
-              <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
-              <button type="submit" disabled={busy||!client}>{busy?'Sending…':'Send sign-in link ↗'}</button>
-              {googleEnabled&&<button type="button" className="crew-auth-back-email" onClick={()=>setEmailOpen(false)}>← Back to Google sign-in</button>}
-            </form>}
-            {error&&<p className="crew-auth-error" role="alert">{error}</p>}
-            {!client&&<p className="crew-auth-error" role="alert">Sign-in is unavailable. Please try again later.</p>}
-          </>}
+          <p className="crew-auth-message">Continue with your Google account.</p>
+          <button type="button" className="crew-auth-google" disabled={busy||!client} onClick={()=>void signInWithGoogle()}>
+            <GoogleMark/><span>{busy?'Opening Google…':'Continue with Google'}</span>
+          </button>
+          {localPasswordAuth&&!emailOpen&&<button type="button" className="crew-auth-email-link" onClick={()=>setEmailOpen(true)}>Local test? Use a password <span>↗</span></button>}
+          {localPasswordAuth&&emailOpen&&<form className="crew-auth-email-form" onSubmit={signInWithPassword}>
+            <label htmlFor="crew-email">YOUR EMAIL</label>
+            <input id="crew-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/>
+            <label htmlFor="crew-password">PASSWORD</label>
+            <input id="crew-password" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6}/>
+            <button type="submit" disabled={busy||!client}>{busy?'Continuing…':'Continue'}</button>
+            <button type="button" className="crew-auth-back-email" onClick={()=>setEmailOpen(false)}>← Back</button>
+          </form>}
+          {error&&<p className="crew-auth-error" role="alert">{error}</p>}
+          {!client&&<p className="crew-auth-error" role="alert">Google is unavailable right now. Please try again later.</p>}
         </div>
-        <footer className="crew-auth-panel-footer"><span>INDEPENDENT FILM. UNLIMITED CONNECTIONS.</span><p>Creating a profile doesn't register you for the official film challenge.</p></footer>
+        <footer className="crew-auth-panel-footer"><span>INDEPENDENT FILM. UNLIMITED CONNECTIONS.</span><p>Creating a profile doesn't register you for the official film challenge. A profile is created only after you accept the <Link href="/terms">Terms</Link>.</p></footer>
       </section>
     </div>
     <div className="crew-auth-corner-code" aria-hidden="true">LIKEMINDS PRESENTS / 48 HOUR FILM PROJECT DUBAI</div>

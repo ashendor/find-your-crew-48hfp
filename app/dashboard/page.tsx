@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import CrewNav from '@/components/CrewNav';
+import {FilmLoader} from '@/components/FilmLoader';
 import {useCrewUser} from '@/lib/use-crew';
 import '../crew-app.css';
 import '../two-pillar.css';
@@ -62,7 +63,7 @@ export default function Dashboard(){
   setLatest({name:person?.display_name||'A filmmaker',role:person?.primary_role||'Creator',body:last.body,created_at:last.created_at});
  },[client,userId]);
  useEffect(()=>{void refresh();const handle=()=>void refresh();window.addEventListener('fc:activity-changed',handle);return()=>window.removeEventListener('fc:activity-changed',handle)},[refresh]);
- if(loading||!user)return <main className="fc-app"><div className="fc-main">{error||'Opening your creative space…'}</div></main>;
+ if(loading||!user)return error ? <main className="fc-app"><div className="fc-main">{error}</div></main> : <FilmLoader delay={600} />;
  const firstName=(user.display_name||user.username).trim().split(/\s+/)[0];
  const pending=requests+invites;
  const profileUrl='/creators/'+encodeURIComponent(user.username);

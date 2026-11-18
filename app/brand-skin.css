@@ -66,6 +66,7 @@
 .crew-auth-editorial-main>p{font-family:Archivo,Arial,sans-serif!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important;color:#4A4541!important}
 .crew-auth-main-heading em,.crew-auth-panel-main h2 em{font-family:'Archivo Black',Arial,sans-serif!important;font-style:normal!important;color:#B4442E!important}
 .crew-auth-topbar a,.crew-auth-message,.crew-auth-panel-footer p{color:#1A1817!important}
-.crew-auth-email-form button[type=submit],.crew-auth-google{border-radius:0!important}
+.crew-auth-email-form button[type=submit]{border-radius:0!important}
+.crew-auth-google{background:#fff!important;color:#1A1817!important;border:1px solid #D4CBBE!important;border-radius:12px!important;min-height:48px!important;justify-content:center!important;box-shadow:none!important;font-size:15px!important;font-weight:600!important}
 .crew-auth-email-form button[type=submit]{background:#1A1817!important}
 .crew-auth-editorial-footer,.crew-auth-corner-code{color:#4A4541!important}

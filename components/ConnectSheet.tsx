@@ -1,47 +1,35 @@
 'use client';
 import {FormEvent,useEffect,useState} from 'react';
 import {getCrewSupabase} from '@/lib/crew-supabase';
-import type {Crew,Project} from '@/lib/crew-types';
+import type {Crew} from '@/lib/crew-types';
 
-export default function ConnectSheet({open,onClose,recipientId,recipientName,recipientAvatar,presetProjectId}:{open:boolean;onClose:()=>void;recipientId:string;recipientName:string;recipientAvatar?:string;presetProjectId?:string}){
+export default function ConnectSheet({open,onClose,recipientId,recipientName,recipientAvatar}:{open:boolean;onClose:()=>void;recipientId:string;recipientName:string;recipientAvatar?:string}){
   const client = getCrewSupabase();
-  const [purpose,setPurpose] = useState<'network'|'project'|'crew'>('network');
-  const [projects,setProjects] = useState<Project[]>([]);
+  const [purpose,setPurpose] = useState<'network'|'crew'>('network');
   const [crews,setCrews] = useState<Crew[]>([]);
-  const [projectId,setProjectId] = useState(presetProjectId || '');
   const [crewId,setCrewId] = useState('');
-  const [teamName,setTeamName] = useState('');
   const [note,setNote] = useState('');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
-  const project = projects.find(p => p.id === projectId);
 
   useEffect(() => {
     if (!open || !client) return;
-    setPurpose(presetProjectId ? 'project' : 'network');
-    setProjectId(presetProjectId || '');
-    setCrewId(''); setTeamName(''); setNote(''); setError('');
+    setPurpose('network');
+    setCrewId(''); setNote(''); setError('');
     void (async () => {
       const {data:{user}} = await client.auth.getUser();
-      const [p,c] = await Promise.all([
-        client.from('projects').select('*').eq('status','published').order('featured',{ascending:false}),
-        user ? client.from('crews').select('*').eq('owner_id', user.id) : Promise.resolve({data:[]}),
-      ]);
-      setProjects((p.data || []) as Project[]);
-      setCrews((c.data || []) as Crew[]);
+      const {data} = user ? await client.from('crews').select('*').eq('owner_id', user.id) : {data:[]};
+      setCrews((data || []) as Crew[]);
     })();
-  }, [open, client, presetProjectId]);
+  }, [open, client]);
 
   if (!open) return null;
-  const needsTeam = purpose === 'project' && !!project?.team_name_required;
 
   async function send(e:FormEvent){
     e.preventDefault();
     if (!client || busy) return;
     const {data:{user}} = await client.auth.getUser();
     if (!user) { setError('Sign in to connect.'); return; }
-    if (purpose === 'project' && !projectId) { setError('Choose a project.'); return; }
-    if (needsTeam && !crewId && teamName.trim().length < 2) { setError('This project needs a team name, or a team you already have.'); return; }
     setBusy(true); setError('');
     const chosen = crews.find(c => c.id === crewId);
     const {error:insertError} = await client.from('connections').insert({
@@ -49,9 +37,9 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,rec
       recipient_id: recipientId,
       status: 'pending',
       purpose,
-      project_id: purpose === 'project' ? projectId : null,
-      crew_id: crewId || null,
-      team_name: (chosen?.name || teamName.trim() || null),
+      project_id: null,
+      crew_id: purpose === 'crew' ? crewId || null : null,
+      team_name: purpose === 'crew' ? chosen?.name || null : null,
       note: note.trim() || null,
     });
     setBusy(false);
@@ -71,32 +59,21 @@ export default function ConnectSheet({open,onClose,recipientId,recipientName,rec
         <p><span>You're connecting with</span><strong>{recipientName}</strong></p>
       </div>
       <label className="lm-purpose-native">Why would you like to connect?
-          <select value={purpose} onChange={e => { setPurpose(e.target.value as typeof purpose); if (e.target.value !== 'project') setProjectId(''); }}>
+          <select value={purpose} onChange={e => setPurpose(e.target.value as typeof purpose)}>
             <option value="network">Just connect</option>
-            <option value="project">Collaborate on a project</option>
             <option value="crew">Build / join a team</option>
           </select>
         </label>
         <div className="lm-desk lm-purpose-web">
           <p>Why would you like to connect?</p>
-          <button type="button" className={purpose === 'network' ? 'on' : ''} onClick={() => { setPurpose('network'); setProjectId(''); }}>Just connect</button>
-          <button type="button" className={purpose === 'project' ? 'on' : ''} onClick={() => setPurpose('project')}>Collaborate on a project</button>
-          <button type="button" className={purpose === 'crew' ? 'on' : ''} onClick={() => { setPurpose('crew'); setProjectId(''); }}>Build / join a team</button>
+          <button type="button" className={purpose === 'network' ? 'on' : ''} onClick={() => setPurpose('network')}>Just connect</button>
+          <button type="button" className={purpose === 'crew' ? 'on' : ''} onClick={() => setPurpose('crew')}>Build / join a team</button>
         </div>
-        {purpose === 'project' && <label>Project
-          <select value={projectId} onChange={e => setProjectId(e.target.value)} required>
-            <option value="">Choose a project</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.team_name_required ? ' · team name required' : ''}</option>)}
-          </select>
-        </label>}
-        {purpose !== 'network' && crews.length > 0 && <label>Team you already have
+        {purpose === 'crew' && crews.length > 0 && <label>Team you already have
           <select value={crewId} onChange={e => setCrewId(e.target.value)}>
             <option value="">None</option>
             {crews.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-        </label>}
-        {purpose === 'project' && !crewId && <label>{needsTeam ? 'Team name' : 'Team name (optional)'}
-          <input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={70} required={needsTeam} placeholder={needsTeam ? 'Required for this project' : 'Only if this project asks for one'} />
         </label>}
         <label>
           <span className="lm-phone-label">Message (optional)</span>

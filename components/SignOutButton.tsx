@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCrewSupabase } from '@/lib/crew-supabase';
+import { armLoader } from '@/components/RouteLoader';
 
 export default function SignOutButton({ className = '', onSuccess }: { className?: string; onSuccess?: () => void }) {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function SignOutButton({ className = '', onSuccess }: { className
       const { error: signOutError } = await client.auth.signOut();
       if (signOutError) throw signOutError;
       onSuccess?.();
+      armLoader();
       router.replace('/');
       router.refresh();
     } catch (e) {

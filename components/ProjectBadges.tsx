@@ -2,7 +2,7 @@
 import {useEffect, useState} from 'react';
 import Link from 'next/link';
 import {getCrewSupabase} from '@/lib/crew-supabase';
-import type {Project} from '@/lib/crew-types';
+import {projectTitle,type Project} from '@/lib/crew-types';
 
 export default function ProjectBadges({userId}:{userId:string}){
   const [projects, setProjects] = useState<Project[]>([]);
@@ -20,5 +20,5 @@ export default function ProjectBadges({userId}:{userId:string}){
     return () => { active = false; };
   }, [userId]);
   if (!projects.length) return null;
-  return <div className="lm-badges">{projects.map(project => <Link className="lm-badge" key={project.id} href={'/projects/' + project.id}>Participating in {project.name}</Link>)}</div>;
+  return <div className="lm-badges">{projects.map(project => <Link className="lm-badge" key={project.id} href={'/projects/' + project.id}>Participating in {projectTitle(project)}</Link>)}</div>;
 }

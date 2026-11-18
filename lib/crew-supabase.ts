@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { ROLES } from '@/lib/crew-types';
 
 let instance: SupabaseClient | null = null;
 
@@ -10,6 +11,6 @@ export function getCrewSupabase(): SupabaseClient | null {
   return instance;
 }
 
-export const CREW_ROLES = ['Director', 'Producer', 'Writer', 'Actor', 'Cinematographer', 'Camera', 'Editor', 'Sound', 'Composer', 'Production Design', 'Lighting', 'Other'] as const;
+export const CREW_ROLES = ROLES;
 export const CREW_LOOKING_FOR = ['A film crew', 'Collaborators', 'Acting roles', 'Creative projects', 'Networking'] as const;
 export const CREW_AVATAR_BUCKET = 'crew-avatars';

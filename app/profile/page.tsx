@@ -11,6 +11,10 @@ import Tabs from '@/components/Tabs';
 import BackButton, {useGoBack} from '@/components/BackButton';
 import SignOutButton from '@/components/SignOutButton';
 import HeaderActions from '@/components/HeaderActions';
+import PhotoView from '@/components/PhotoView';
+import ProfileBio from '@/components/ProfileBio';
+import {FilmLoader} from '@/components/FilmLoader';
+import {compressImage} from '@/lib/compress-image';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
 import {INTENTS,ROLES,schemaMissing,type Creator,type Work} from '@/lib/crew-types';
 import '../crew-app.css';
@@ -55,7 +59,7 @@ function ProfilePage(){
   if(!active)return;
   if(e){setError(e.message);setLoading(false);return}
   if(!data?.onboarding_complete){router.replace('/onboarding');return}
-  // The existing approved /profile OAuth and magic-link callback must remain intact.
+  // The existing approved /profile Google sign-in callback must remain intact.
   // A fresh sign-in should open My Space; deliberate visits to /profile still edit the card.
   const returnedFromSignIn = window.sessionStorage.getItem('fc:return-from-signin')==='1';
   const callbackQuery = new URLSearchParams(window.location.search);
@@ -77,9 +81,9 @@ function ProfilePage(){
   const file=e.target.files?.[0];if(!file||!client||!userId)return;
   setPhotoBusy(true);setError('');
   try{
-   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>3145728)throw new Error('Choose a JPG, PNG or WebP under 3 MB.');
-   const path=userId+'/'+crypto.randomUUID()+'.'+(file.type==='image/jpeg'?'jpg':file.type.split('/')[1]);
-   const {error:uploadError}=await client.storage.from(CREW_AVATAR_BUCKET).upload(path,file,{contentType:file.type});
+   const image=await compressImage(file);
+   const path=userId+'/'+crypto.randomUUID()+'.jpg';
+   const {error:uploadError}=await client.storage.from(CREW_AVATAR_BUCKET).upload(path,image,{contentType:'image/jpeg'});
    if(uploadError)throw uploadError;
    set('avatar_url',client.storage.from(CREW_AVATAR_BUCKET).getPublicUrl(path).data.publicUrl);
    setSuccess('New portrait uploaded. Save your card to publish it.')
@@ -134,21 +138,21 @@ function ProfilePage(){
   if(navigator.share){try{await navigator.share({title:'My Creator Card · Find Your Crew',url});return}catch{}}
   try{await navigator.clipboard.writeText(url);setSuccess('Profile link copied — ready to share.')}catch{setError('Could not copy automatically. Open your public card and copy its URL.')}
  }
- if(loading)return <main className="fc-app"><div className="fc-main">{error||'Opening your Creator Studio…'}</div></main>;
+ if(loading)return error ? <main className="fc-app"><div className="fc-main">{error}</div></main> : <FilmLoader delay={600} />;
  if(!client)return <main className="fc-app"><div className="fc-main">Sign-in configuration is unavailable.</div></main>;
  const asked=params.get('tab');
- const tab=asked==='crews'?'teams':asked==='edit'||asked==='projects'||asked==='teams'||asked==='work'||asked==='settings'?asked:'work';
+ const tab=asked==='crews'||asked==='teams'?'teams':asked==='edit'||asked==='settings'?asked:'work';
  const platforms: {name:string;key:LinkKey;href:string}[] = [{name:'Instagram',key:'instagram_url',href:form.instagram_url},{name:'YouTube',key:'youtube_url',href:form.youtube_url},{name:'Vimeo',key:'vimeo_url',href:form.vimeo_url},{name:'Behance',key:'behance_url',href:form.behance_url},{name:'Dribbble',key:'dribbble_url',href:form.dribbble_url},{name:'Website',key:'website_url',href:form.website_url}];
  return <PlatformShell>
   <header className="lm-top">{tab==='edit'?<><BackButton fallback="/profile?tab=settings" label="Back" /><h1 className="lm-bar-title">Edit profile</h1><div className="lm-nav-actions"><HeaderActions /><button className="lm-done" type="submit" form="lm-edit" disabled={saving||photoBusy}>{saving?'Saving':'Done'}</button></div></>:tab==='settings'?<><BackButton fallback="/profile" label="Back" /><h1 className="lm-bar-title">Settings</h1><HeaderActions /></>:<><div className="lm-brand"><BackButton fallback="/home" /><Link className="lm-word" href="/home">LikeMinds</Link></div><HeaderActions /></>}</header>
   {tab!=='edit'&&tab!=='settings'&&<>
-    <div className="lm-identity">{form.avatar_url?<img src={form.avatar_url} alt=""/>:<span className="lm-avatar">{(form.display_name||'L').slice(0,1)}</span>}
+    <div className="lm-identity">{form.avatar_url?<PhotoView src={form.avatar_url} alt={form.display_name||'Profile photo'}/>:<span className="lm-avatar">{(form.display_name||'L').slice(0,1)}</span>}
       <h2>{form.display_name||'Your profile'}</h2>
       <p className="lm-role">{form.primary_role||'Creator'}{form.location?' · '+form.location:''}</p>
       {userId&&<ProjectBadges userId={userId} />}
-      {(form.bio||form.headline)&&<p className="lm-bio">{form.bio||form.headline}</p>}
+      {(form.bio||form.headline)&&<ProfileBio text={form.bio||form.headline||''} />}
     </div>
-    <Tabs label="Profile" current={tab} items={[{id:'work', label:'Work', href:'/profile?tab=work'},{id:'projects', label:'Projects', href:'/profile?tab=projects'},{id:'teams', label:'Teams', href:'/profile?tab=teams'}]} />
+    <Tabs label="Profile" current={tab} items={[{id:'work', label:'Work', href:'/profile?tab=work'},{id:'teams', label:'Teams', href:'/profile?tab=teams'}]} />
     {tab==='work'&&<>
       <PlatformBoard items={platforms} extras={extras.map(item=>({id:item.id,name:item.title,href:item.url}))} mine onLink={item=>{const row=platforms.find(platform=>platform.name===item.name);if(!row)return;setLinking(row);setLinkUrl('');setOtherName('');setLinkError('')}} onAddOther={()=>{setLinking({name:'Others'});setLinkUrl('');setOtherName('');setLinkError('')}} onRemoveExtra={id=>void removeExtra(id)} />
     </>}
@@ -156,7 +160,7 @@ function ProfilePage(){
   </>}
   {tab==='settings'&&<nav className="lm-settings" aria-label="Settings"><Link className="lm-setrow" href="/profile?tab=edit"><span>Edit profile<small>Photo, name, roles, and links</small></span><em aria-hidden="true">›</em></Link><SignOutButton className="lm-setrow lm-setout" /></nav>}
   {tab==='edit'&&<form id="lm-edit" className="lm-edit" onSubmit={save}>
-    <input ref={photoRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} aria-label="Upload a profile photo"/>
+    <input ref={photoRef} hidden type="file" accept="image/*" onChange={upload} aria-label="Upload a profile photo"/>
     <div className="lm-edit-photo">
       <button className="lm-edit-avatar" type="button" onClick={()=>photoRef.current?.click()} disabled={photoBusy} aria-label="Change photo">{form.avatar_url?<img src={form.avatar_url} alt=""/>:<span>{(form.display_name||'L').slice(0,1)}</span>}</button>
       <button className="lm-edit-photo-btn" type="button" onClick={()=>photoRef.current?.click()} disabled={photoBusy}>{photoBusy?'Uploading…':'Change photo'}</button>
@@ -168,7 +172,7 @@ function ProfilePage(){
       <div className="lm-edit-group">
         <label htmlFor="studio-name">Name<input id="studio-name" className="lm-field" required maxLength={80} value={form.display_name} onChange={e=>set('display_name',e.target.value)} placeholder="Your name"/></label>
         <label htmlFor="studio-handle">Handle<input id="studio-handle" className="lm-field" required minLength={3} maxLength={24} value={form.username} onChange={e=>set('username',e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))} placeholder="yourname"/></label>
-        <label htmlFor="studio-role">Creative role<select id="studio-role" className="lm-field" required value={form.primary_role} onChange={e=>set('primary_role',e.target.value)}><option value="">Choose a role</option>{ROLES.map(r=><option key={r} value={r}>{r}</option>)}</select></label>
+        <label htmlFor="studio-role">Creative role<select id="studio-role" className="lm-field" required value={form.primary_role} onChange={e=>set('primary_role',e.target.value)}><option value="">Choose a role</option>{(form.primary_role && !ROLES.includes(form.primary_role) ? [form.primary_role, ...ROLES] : ROLES).map(r=><option key={r} value={r}>{r}</option>)}</select></label>
         <label htmlFor="studio-city">City<input id="studio-city" className="lm-field" maxLength={80} value={form.location} onChange={e=>set('location',e.target.value)} placeholder="Dubai"/></label>
         <label htmlFor="studio-headline">One-liner<input id="studio-headline" className="lm-field" maxLength={120} value={form.headline} onChange={e=>set('headline',e.target.value)} placeholder="What you make"/></label>
         <label htmlFor="studio-bio">Bio<textarea id="studio-bio" className="lm-field" maxLength={600} rows={3} value={form.bio} onChange={e=>set('bio',e.target.value)} placeholder="A short introduction"/></label>
@@ -183,7 +187,7 @@ function ProfilePage(){
     </section>
     <section>
       <h2>Also works as</h2>
-      <div className="lm-pills">{ROLES.filter(r=>r!==form.primary_role).map(r=><button type="button" key={r} aria-pressed={form.categories.includes(r)} onClick={()=>set('categories',form.categories.includes(r)?form.categories.filter(x=>x!==r):[...form.categories,r])}>{r}</button>)}</div>
+      <div className="lm-pills">{[...form.categories.filter(r=>r!==form.primary_role && !ROLES.includes(r)), ...ROLES.filter(r=>r!==form.primary_role)].map(r=><button type="button" key={r} aria-pressed={form.categories.includes(r)} onClick={()=>set('categories',form.categories.includes(r)?form.categories.filter(x=>x!==r):[...form.categories,r])}>{r}</button>)}</div>
       <div className="lm-edit-group">
         <label htmlFor="studio-exp">Experience<select id="studio-exp" className="lm-field" value={form.experience} onChange={e=>set('experience',e.target.value)}><option value="emerging">Emerging</option><option value="experienced">Experienced</option><option value="professional">Professional</option></select></label>
         <label htmlFor="studio-intent">Here to<select id="studio-intent" className="lm-field" value={form.intent} onChange={e=>set('intent',e.target.value as typeof form.intent)}>{INTENTS.map(i=><option key={i.value} value={i.value}>{i.title}</option>)}</select></label>
@@ -215,4 +219,4 @@ function ProfilePage(){
   </div>}
  </PlatformShell>
 }
-export default function ProfileRoute(){return <Suspense fallback={<main className="lm-page"><div className="lm-main">Opening your profile…</div></main>}><ProfilePage/></Suspense>}
+export default function ProfileRoute(){return <Suspense fallback={<FilmLoader delay={600} />}><ProfilePage/></Suspense>}

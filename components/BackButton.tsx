@@ -1,6 +1,7 @@
 'use client';
 import {Suspense,useEffect} from 'react';
 import {usePathname,useRouter,useSearchParams} from 'next/navigation';
+import {armLoader} from '@/components/RouteLoader';
 
 const KEY = 'lm:trail';
 
@@ -23,6 +24,7 @@ export function useGoBack(fallback = '/home'){
     if (trail.at(-1) === current) trail.pop();
     const previous = trail.at(-1);
     write(trail);
+    armLoader();
     router.push(previous && previous !== current ? previous : fallback);
   };
 }
