@@ -308,16 +308,21 @@ export default function InboxPage(){
       {!!conversations.length && !visible.length && <p className="lm-muted">No conversation matches that search.</p>}
     </div>}
     {tab === 'requests' && <>
-      {requests.map(item => <article key={item.id}>
-        <div className="lm-inbox-row">{face(other(item))}<div><strong>{other(item)?.display_name || 'Creator'}</strong><p>{preview(item)}{item.team_name ? ' · ' + item.team_name : ''}</p></div><span className="lm-inbox-meta"><time>{ago(item.created_at)}</time><i className="lm-unread" aria-label="New"/></span></div>
-        <div className="lm-actions lm-pair" style={{margin:'0 0 12px 60px'}}><button className="lm-btn" type="button" disabled={busy} onClick={() => void respond(item.id,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respond(item.id,'declined')}>Decline</button></div>
+      {requests.map(item => <article className="lm-request" key={item.id}>
+        <div className="lm-inbox-row">
+          <div className="lm-inbox-open">{face(other(item))}<div><strong>{other(item)?.display_name || 'Creator'}</strong><p>{preview(item)}{item.team_name ? ' · ' + item.team_name : ''}</p></div></div>
+          <div className="lm-inbox-meta"><time>{ago(item.created_at)}</time><i className="lm-unread" aria-label="New"/></div>
+        </div>
+        <div className="lm-actions lm-pair"><button className="lm-btn" type="button" disabled={busy} onClick={() => void respond(item.id,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respond(item.id,'declined')}>Decline</button></div>
       </article>)}
       {!requests.length && <div className="lm-empty"><strong>No requests waiting</strong><p>When someone wants to connect, you can accept or decline it here.</p></div>}
     </>}
     {tab === 'invites' && <>
-      {invites.map(invite => <article key={invite.kind + invite.id}>
-        <div className="lm-inbox-row">{group}<div><strong>{invite.label}</strong><p>{invite.kind === 'crew' ? 'Team invitation' : 'Project invitation'} · {invite.role}</p></div></div>
-        <div className="lm-actions lm-pair" style={{margin:'0 0 12px 60px'}}><button className="lm-btn" type="button" disabled={busy} onClick={() => void respondInvite(invite,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respondInvite(invite,'declined')}>Decline</button></div>
+      {invites.map(invite => <article className="lm-request" key={invite.kind + invite.id}>
+        <div className="lm-inbox-row">
+          <div className="lm-inbox-open">{group}<div><strong>{invite.label}</strong><p>{invite.kind === 'crew' ? 'Team invitation' : 'Project invitation'} · {invite.role}</p></div></div>
+        </div>
+        <div className="lm-actions lm-pair"><button className="lm-btn" type="button" disabled={busy} onClick={() => void respondInvite(invite,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respondInvite(invite,'declined')}>Decline</button></div>
       </article>)}
       {!invites.length && <div className="lm-empty"><strong>No invitations</strong><p>Team and project invites show up here. They are separate from connection requests.</p></div>}
     </>}

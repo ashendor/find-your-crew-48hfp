@@ -11,7 +11,7 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
   const [tab, setTab] = useState<'work'|'projects'|'teams'>('work');
   const [projects, setProjects] = useState<Project[]>([]);
   const [crews, setCrews] = useState<Crew[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [linkStatus, setLinkStatus] = useState<'pending'|'accepted'|''>('');
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1180px)');
     const client = getCrewSupabase();
@@ -23,12 +23,12 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
       const [projectRows, crewRows, link] = await Promise.all([
         client.from('projects').select('*').eq('owner_id', creator.id).order('created_at', {ascending:false}),
         client.from('crews').select('*').eq('owner_id', creator.id).order('created_at', {ascending:false}),
-        client.from('connections').select('status').or('and(requester_id.eq.' + viewer + ',recipient_id.eq.' + creator.id + '),and(requester_id.eq.' + creator.id + ',recipient_id.eq.' + viewer + ')').eq('status', 'accepted').limit(1),
+        client.from('connections').select('status').or('and(requester_id.eq.' + viewer + ',recipient_id.eq.' + creator.id + '),and(requester_id.eq.' + creator.id + ',recipient_id.eq.' + viewer + ')').in('status', ['pending','accepted']).limit(1),
       ]);
       if (!active) return;
       setProjects((projectRows.data || []) as Project[]);
       setCrews((crewRows.data || []) as Crew[]);
-      setConnected((link.data || []).length > 0);
+      setLinkStatus(((link.data || []) as {status:'pending'|'accepted'}[])[0]?.status || '');
       })();
     };
     load();
@@ -45,8 +45,8 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
         <p>{creator.primary_role || 'Creator'}{creator.location ? ' · ' + creator.location : ''}</p>
         {(creator.bio || creator.headline) && <p className="lm-desk-bio">{creator.bio || creator.headline}</p>}
         <div className="lm-desk-cta">
-          {creator.id === viewer ? <Link className="lm-btn" href="/profile">Edit profile</Link> : <button className="lm-btn" type="button" onClick={onConnect}>Connect</button>}
-          {creator.id !== viewer && connected && <Link className="lm-btn-line" href="/inbox">Message</Link>}
+          {creator.id === viewer ? <Link className="lm-btn" href="/profile">Edit profile</Link> : linkStatus ? <button className="lm-btn is-connected" type="button" disabled>Connected</button> : <button className="lm-btn" type="button" onClick={onConnect}>Connect</button>}
+          {creator.id !== viewer && linkStatus === 'accepted' && <Link className="lm-btn-line" href="/inbox">Message</Link>}
         </div>
       </div>
     </div>

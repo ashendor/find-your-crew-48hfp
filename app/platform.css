@@ -149,6 +149,12 @@ button.lm-plat.lm-plat-add{border:1px solid #E6DDD0}
 .lm-inbox-row.is-unread strong{font-weight:800}
 .lm-inbox-row.is-unread p{color:#1A1817;font-weight:650}
 .lm-inbox-delete{border:0;background:transparent;padding:4px;color:#C44832;font:700 18px/1 Archivo,Arial,sans-serif;cursor:pointer}
+.lm-request{display:grid;gap:14px;max-width:640px;padding:16px 0 18px;border-bottom:1px solid #EFE6D8}
+.lm-request .lm-inbox-row{padding:0;border:0}
+.lm-request .lm-inbox-open{cursor:default}
+.lm-request .lm-inbox-meta{display:flex;align-items:center;gap:8px;align-self:start;padding-top:4px}
+.lm-request p{white-space:normal}
+.lm-request .lm-actions{margin:0 0 0 64px}
 .lm-chat{display:flex;flex-direction:column;min-height:0;flex:1}
 .lm-chat-bar{display:flex;align-items:center;gap:8px;min-height:56px;padding-bottom:10px;border-bottom:1px solid #E7DFD2}
 .lm-chat-back{width:36px;height:36px;flex:none;border:0;border-radius:50%;background:#EFE8DA;color:#1A1817;font-size:26px;line-height:1;cursor:pointer}
@@ -297,6 +303,10 @@ button.lm-plat.lm-plat-add{border:1px solid #E6DDD0}
 .lm-points li{position:relative;padding-left:14px;font-size:15px;line-height:1.4}
 .lm-points li:before{content:'';position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:50%;background:#C44832}
 .lm-linkrow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:#fff;border:1px solid #E4D9C8;color:#1A1817;text-decoration:none}
+button.lm-linkrow{width:100%;font:inherit;cursor:pointer;text-align:left}
+.lm-register{display:grid;gap:14px}
+.lm-register p{margin:0;font-size:15px;line-height:1.45}
+.lm-register .lm-btn,.lm-register .lm-btn-line{width:100%}
 .lm-linkmark{width:40px;height:40px;flex:none;border-radius:10px;background:#1A1817;color:#F6F1E7;display:grid;place-items:center}
 .lm-linkrow strong{display:block;font-size:14px}
 .lm-linkrow small{display:block;margin-top:2px;color:#6F675F;font-size:12px;font-weight:600;word-break:break-all}
@@ -312,6 +322,7 @@ button.lm-plat.lm-plat-add{border:1px solid #E6DDD0}
 .lm-find .lm-actions{margin:0 0 8px}
 .lm-danger{margin-top:22px;border:0;background:transparent;color:#C44832;font:800 14px Archivo,Arial,sans-serif;cursor:pointer;padding:8px 0}
 .lm-btn:disabled,.lm-btn-line:disabled{opacity:.55;cursor:default}
+.lm-btn.is-connected:disabled{opacity:1;background:#EFE8DA;color:#1A1817}
 .lm-webchrome,.lm-webtop,.lm-desk{display:none}
 .lm-stage{display:contents}
 .lm-phone-label{display:contents}
