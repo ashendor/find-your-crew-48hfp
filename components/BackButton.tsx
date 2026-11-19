@@ -2,6 +2,7 @@
 import {Suspense,useEffect} from 'react';
 import {usePathname,useRouter,useSearchParams} from 'next/navigation';
 import {armLoader} from '@/components/RouteLoader';
+import {appPath} from '@/lib/base-path';
 
 const KEY = 'lm:trail';
 
@@ -20,7 +21,7 @@ export function useGoBack(fallback = '/home'){
   const router = useRouter();
   return () => {
     const trail = read();
-    const current = window.location.pathname + window.location.search;
+    const current = appPath(window.location.pathname + window.location.search);
     if (trail.at(-1) === current) trail.pop();
     const previous = trail.at(-1);
     write(trail);

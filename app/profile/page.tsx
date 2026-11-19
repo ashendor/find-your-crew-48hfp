@@ -16,6 +16,7 @@ import ProfileBio from '@/components/ProfileBio';
 import {FilmLoader} from '@/components/FilmLoader';
 import {compressImage} from '@/lib/compress-image';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
+import {withBasePath} from '@/lib/base-path';
 import {INTENTS,ROLES,schemaMissing,type Creator,type Work} from '@/lib/crew-types';
 import '../crew-app.css';
 import '../platform.css';
@@ -134,7 +135,7 @@ function ProfilePage(){
   setExtras(v=>v.filter(row=>row.id!==id));
  }
  async function share(){
-  const url=window.location.origin+'/creators/'+encodeURIComponent(form.username);
+  const url=window.location.origin+withBasePath('/creators/'+encodeURIComponent(form.username));
   if(navigator.share){try{await navigator.share({title:'My Creator Card · Find Your Crew',url});return}catch{}}
   try{await navigator.clipboard.writeText(url);setSuccess('Profile link copied — ready to share.')}catch{setError('Could not copy automatically. Open your public card and copy its URL.')}
  }

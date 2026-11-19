@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  basePath: '/48hrproject',
   async redirects() {
     return [
       {source: '/dashboard', destination: '/home', permanent: false},

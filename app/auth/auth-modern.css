@@ -4,7 +4,7 @@
 .crew-auth-reimagined{position:relative;width:100%;min-height:100svh;padding:0!important;background:#171310;color:#f7ebd7;font-family:'Space Grotesk',sans-serif;display:flex;flex-direction:column;isolation:isolate;overflow-x:clip}
 .crew-auth-reimagined *{box-sizing:border-box;min-width:0}
 .crew-auth-scene{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
-.crew-auth-scene-image{position:absolute;inset:-2%;background:url('/hero-filmset.webp') center 52%/cover;animation:crew-auth-arrive 18s ease-out both}
+.crew-auth-scene-image{position:absolute;inset:-2%;background:url('/48hrproject/hero-filmset.webp') center 52%/cover;animation:crew-auth-arrive 18s ease-out both}
 .crew-auth-scene-wash{position:absolute;inset:0;background:linear-gradient(90deg,#120d0ae9 0%,#130e0ba8 52%,#120e0ae0 100%),linear-gradient(0deg,#120d0af5 1%,transparent 47%,#100d0a66 100%)}
 .crew-auth-scene-grid{position:absolute;inset:0;background-image:linear-gradient(#b9965411 1px,transparent 1px),linear-gradient(90deg,#b9965411 1px,transparent 1px);background-size:115px 115px;mask-image:linear-gradient(90deg,black,transparent 78%)}
 .crew-auth-topbar{position:relative;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:clamp(17px,2.6vh,27px) clamp(22px,4.5vw,78px);border-bottom:1px solid #e9cda82e}

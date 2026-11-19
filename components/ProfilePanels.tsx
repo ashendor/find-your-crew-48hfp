@@ -40,5 +40,16 @@ export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab
   }, [client, userId, tab]);
   if (tab === 'work' || (tab === 'teams' && !owner)) return null;
   if (tab === 'projects') return projects.length ? <div>{projects.map(project => <Link className="lm-rowitem" key={project.id} href={'/projects/' + project.id}><span className="lm-avatar">{projectTitle(project).slice(0,1)}</span><div><strong>{projectTitle(project)}</strong><p>Featured project</p></div></Link>)}</div> : <div className="lm-empty"><strong>No featured project yet</strong><p>The featured project shows here after this profile joins it.</p></div>;
-  return <div>{teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? (owner ? 'You lead this team' : 'Leads this team') : 'Member')}</p></div></Link>)}{!teams.length && <div className="lm-empty"><strong>No teams yet</strong><p>{owner ? 'A team is only created when you confirm it. A team name on a request does not make one.' : 'A team appears here only after this creator creates one.'}</p>{owner && <Link className="lm-btn" href="/create?mode=team">Create a team</Link>}</div>}{owner && teams.length > 0 && <Link className="lm-addline" href="/create?mode=team">Add a team</Link>}</div>;
+  if (!teams.length) return <div className="lm-empty"><strong>No teams yet</strong><p>{owner ? 'A team is only created when you confirm it. A team name on a request does not make one.' : 'A team appears here only after this creator creates one.'}</p>{owner && <Link className="lm-btn" href="/create?mode=team">Create a team</Link>}</div>;
+  const leading = teams.filter(team => team.owner_id === userId).length;
+  const summary = teams.length === 1 ? '1 team' : leading === teams.length ? 'You lead ' + teams.length : teams.length + ' teams';
+  return <section className="lm-teamlist" aria-label="Your teams">
+    <div className="lm-teamhead">
+      <div><h2>Your teams</h2><p>{summary}</p></div>
+      {owner && <Link className="lm-addchip" href="/create?mode=team"><span aria-hidden="true">+</span>Add</Link>}
+    </div>
+    <div className="lm-teamcard">
+      {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? (owner ? 'You lead this team' : 'Leads this team') : 'Member')}</p></div></Link>)}
+    </div>
+  </section>;
 }

@@ -7,6 +7,7 @@ import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
 import {projectTitle,schemaMissing,type Creator,type Crew,type Project} from '@/lib/crew-types';
 import '../platform.css';
+import { withBasePath } from '@/lib/base-path';
 
 function lines(name:string){
   const parts = name.trim().split(/\s+/);
@@ -73,7 +74,7 @@ export default function LikeMindsHome(){
         <strong>{lines(projectTitle(shown))}</strong>
         <p>{blurb}</p>
       </div>
-      <img src="/brand/past-jbr-finals.jpg" alt="" />
+      <img src={withBasePath("/brand/past-jbr-finals.jpg")} alt="" />
       <div className="lm-feature-date"><span>{dates(shown.starts_on, shown.ends_on)}</span><span aria-hidden="true">→</span></div>
     </Link>
     {setup && <p className="lm-note" style={{marginTop:10}}>{setup}</p>}

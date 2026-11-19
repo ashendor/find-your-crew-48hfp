@@ -3,7 +3,7 @@
 .fc-duo-app .fc-nav--studio{background:#140f0def;border-color:#a683623d;position:relative;z-index:20;height:73px}
 .fc-duo-app .fc-nav--studio .fc-wordmark{font-family:'Space Grotesk',sans-serif}
 .fc-duo-scene{position:relative;isolation:isolate;min-height:calc(100svh - 73px);background:#1c120f;overflow:hidden}
-.fc-duo-hero-photo{position:absolute;inset:-6% -3% 0;background:url('/hero-filmset.webp') center 41%/cover no-repeat;opacity:.78;filter:saturate(1.18) contrast(1.17) sepia(.14);transform:scale(1.035);animation:fc-duo-zoom 18s ease-out both;z-index:-3}
+.fc-duo-hero-photo{position:absolute;inset:-6% -3% 0;background:url('/48hrproject/hero-filmset.webp') center 41%/cover no-repeat;opacity:.78;filter:saturate(1.18) contrast(1.17) sepia(.14);transform:scale(1.035);animation:fc-duo-zoom 18s ease-out both;z-index:-3}
 .fc-duo-scene:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#120c0adf 0%,#150c0bce 37%,#21130d66 71%,#150c0bce 100%),linear-gradient(0deg,#130b09 0%,#160c0b94 25%,#180d0b38 62%,#120b09ae 100%);z-index:-2}
 .fc-duo-scene:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.23;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.66' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.21'/%3E%3C/svg%3E");z-index:-1}
 .fc-duo-film-edge{position:absolute;left:0;top:0;bottom:0;width:36px;opacity:.38;pointer-events:none;background:repeating-linear-gradient(180deg,transparent 0 18px,#f0a267 19px 35px,transparent 36px 54px),linear-gradient(90deg,#62231e,#14100d);mask-image:linear-gradient(90deg,black,transparent)}
@@ -20,7 +20,7 @@
 .fc-duo-choice:nth-child(1){animation:fc-duo-enter .8s .12s ease both}
 .fc-duo-choice:nth-child(2){animation:fc-duo-enter .8s .23s ease both}
 .fc-duo-choice:hover,.fc-duo-choice:focus-visible{transform:perspective(1250px) translateY(-9px) scale(1.012);border-color:#f4cc91;box-shadow:0 34px 85px #000c,0 0 0 2px #d9a66036;outline:none}
-.fc-duo-choice-photo{position:absolute;inset:0;background:url('/hero-filmset.webp') center/cover;filter:saturate(1.2);transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .5s}
+.fc-duo-choice-photo{position:absolute;inset:0;background:url('/48hrproject/hero-filmset.webp') center/cover;filter:saturate(1.2);transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .5s}
 .fc-duo-choice-discover .fc-duo-choice-photo{background-position:71% center}
 .fc-duo-choice-crews .fc-duo-choice-photo{background-position:91% center;transform:scale(1.26) scaleX(-1);filter:sepia(.42) saturate(.85) contrast(1.23)}
 .fc-duo-choice-discover:hover .fc-duo-choice-photo{transform:scale(1.09)}
