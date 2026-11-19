@@ -52,14 +52,21 @@ export function RouteLoader() {
       if (dest === here) return;
       armImpl();
     };
-    const onPop = () => armImpl();
+    const finish = () => {
+      trip.current += 1;
+      setPhase(current => current === 'on' ? 'out' : current);
+    };
+    const onPop = () => finish();
+    const onShow = (event: PageTransitionEvent) => { if (event.persisted) finish(); };
     document.addEventListener('click', onClick, true);
     window.addEventListener('popstate', onPop);
+    window.addEventListener('pageshow', onShow);
     return () => {
       armImpl = () => {};
       clearImpl = () => {};
       document.removeEventListener('click', onClick, true);
       window.removeEventListener('popstate', onPop);
+      window.removeEventListener('pageshow', onShow);
     };
   }, []);
 

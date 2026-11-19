@@ -12,6 +12,23 @@ export function withBasePath(path: string) {
   return `${basePath}${normalized}`;
 }
 
+/**
+ * Public site origin. Production never uses the Vercel hostname.
+ * `NEXT_PUBLIC_SITE_URL` is the origin only, without `/48hrproject`.
+ */
+export function siteOrigin() {
+  if (process.env.NODE_ENV !== 'production') {
+    return typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+  }
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || 'https://likeminds.ae';
+  return configured.endsWith(basePath) ? configured.slice(0, -basePath.length) : configured;
+}
+
+/** Absolute URL for a hand-built path. Next navigation must not use this. */
+export function publicUrl(path: string) {
+  return siteOrigin() + withBasePath(path);
+}
+
 /** App path as `usePathname` and `router.push` see it, without `basePath`. */
 export function appPath(path: string) {
   const queryAt = path.indexOf('?');

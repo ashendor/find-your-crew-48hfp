@@ -7,12 +7,14 @@ import {nameOf} from '@/lib/crew-types';
 import PlatformBoard, {type PlatformCard} from '@/components/PlatformBoard';
 import Tabs from '@/components/Tabs';
 import { withBasePath } from '@/lib/base-path';
+import TeamCopy from '@/components/TeamCopy';
 
 export default function CreatorDesk({creator, viewer, onConnect, platforms, extras}:{creator:Creator; viewer:string; onConnect:()=>void; platforms: PlatformCard[]; extras: (PlatformCard & {id: string})[]}){
   const [tab, setTab] = useState<'work'|'projects'|'teams'>('work');
   const [projects, setProjects] = useState<Project[]>([]);
   const [crews, setCrews] = useState<Crew[]>([]);
   const [linkStatus, setLinkStatus] = useState<'pending'|'accepted'|''>('');
+  const [connectionId, setConnectionId] = useState('');
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1180px)');
     const client = getCrewSupabase();
@@ -24,12 +26,14 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
       const [projectRows, crewRows, link] = await Promise.all([
         client.from('projects').select('*').eq('owner_id', creator.id).order('created_at', {ascending:false}),
         client.from('crews').select('*').eq('owner_id', creator.id).order('created_at', {ascending:false}),
-        client.from('connections').select('status').or('and(requester_id.eq.' + viewer + ',recipient_id.eq.' + creator.id + '),and(requester_id.eq.' + creator.id + ',recipient_id.eq.' + viewer + ')').in('status', ['pending','accepted']).limit(1),
+        client.from('connections').select('id,status').or('and(requester_id.eq.' + viewer + ',recipient_id.eq.' + creator.id + '),and(requester_id.eq.' + creator.id + ',recipient_id.eq.' + viewer + ')').in('status', ['pending','accepted']).order('created_at', {ascending:false}).limit(1),
       ]);
       if (!active) return;
       setProjects((projectRows.data || []) as Project[]);
       setCrews((crewRows.data || []) as Crew[]);
-      setLinkStatus(((link.data || []) as {status:'pending'|'accepted'}[])[0]?.status || '');
+      const row = ((link.data || []) as {id?:string;status:'pending'|'accepted'}[])[0];
+      setLinkStatus(row?.status || '');
+      setConnectionId(row?.id || '');
       })();
     };
     load();
@@ -46,14 +50,14 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
         <p>{creator.primary_role || 'Creator'}{creator.location ? ' · ' + creator.location : ''}</p>
         {(creator.bio || creator.headline) && <p className="lm-desk-bio">{creator.bio || creator.headline}</p>}
         <div className="lm-desk-cta">
-          {creator.id === viewer ? <Link className="lm-btn" href="/profile">Edit profile</Link> : linkStatus ? <button className="lm-btn is-connected" type="button" disabled>Connected</button> : <button className="lm-btn" type="button" onClick={onConnect}>Connect</button>}
-          {creator.id !== viewer && linkStatus === 'accepted' && <Link className="lm-btn-line" href="/inbox">Message</Link>}
+          {creator.id === viewer ? <Link className="lm-btn" href="/profile">Edit profile</Link> : linkStatus === 'accepted' ? <button className="lm-btn is-connected" type="button" disabled>Connected</button> : linkStatus === 'pending' ? <button className="lm-btn is-connected" type="button" disabled>Requested</button> : <button className="lm-btn" type="button" onClick={onConnect}>Connect</button>}
+          {creator.id !== viewer && linkStatus === 'accepted' && <Link className="lm-msg" href={connectionId ? '/inbox?chat=' + connectionId : '/inbox'} aria-label={'Message ' + nameOf(creator)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 16.5 4.5 19.5v-11A2.5 2.5 0 0 1 7 6h10a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 17 17H9z"/></svg></Link>}
         </div>
       </div>
     </div>
     <Tabs label="Creator" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'work', label:'Work'},{id:'teams', label:'Teams'}]} />
     {tab === 'work' && <PlatformBoard items={platforms} extras={extras} mine={false} />}
     {tab === 'projects' && (projects.length ? <div>{projects.map(project => <Link className="lm-rowitem" key={project.id} href={'/projects/' + project.id}><span className="lm-avatar">{project.name.slice(0,1)}</span><div><strong>{project.name}</strong><p>{project.description || 'Project'}</p></div></Link>)}</div> : <div className="lm-empty"><strong>No projects yet</strong><p>Projects this creator starts will show up here.</p></div>)}
-    {tab === 'teams' && (crews.length ? <div>{crews.map(crew => <Link className="lm-rowitem" key={crew.id} href={'/teams/' + crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><strong>{crew.name}</strong><p>{crew.description || 'Team'}</p></div></Link>)}</div> : <div className="lm-empty"><strong>No teams yet</strong><p>A team appears here only after this creator creates one.</p></div>)}
+    {tab === 'teams' && (crews.length ? <div>{crews.map(crew => <Link className="lm-rowitem lm-teamline" key={crew.id} href={'/teams/' + crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><TeamCopy name={crew.name} description={crew.description} member={crew.owner_id === viewer} /></div></Link>)}</div> : <div className="lm-empty"><strong>No teams yet</strong><p>A team appears here only after this creator creates one.</p></div>)}
   </section>;
 }

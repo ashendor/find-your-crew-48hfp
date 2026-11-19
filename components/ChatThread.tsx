@@ -55,6 +55,33 @@ export default function ChatThread({
     el.style.height = '0px';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }, [draft]);
+  useEffect(() => {
+    if (embed) return;
+    const view = window.visualViewport;
+    if (!view) return;
+    const root = document.documentElement;
+    const phone = window.matchMedia('(max-width: 1179px)');
+    const sync = () => {
+      const keyboard = phone.matches && window.innerHeight - view.height > 80;
+      root.classList.toggle('lm-keyboard', keyboard);
+      root.style.setProperty('--lm-vvh', view.height + 'px');
+      root.style.setProperty('--lm-vvt', view.offsetTop + 'px');
+      const scroller = log.current;
+      if (keyboard && scroller) scroller.scrollTop = scroller.scrollHeight;
+    };
+    sync();
+    view.addEventListener('resize', sync);
+    view.addEventListener('scroll', sync);
+    phone.addEventListener('change', sync);
+    return () => {
+      root.classList.remove('lm-keyboard');
+      root.style.removeProperty('--lm-vvh');
+      root.style.removeProperty('--lm-vvt');
+      view.removeEventListener('resize', sync);
+      view.removeEventListener('scroll', sync);
+      phone.removeEventListener('change', sync);
+    };
+  }, [embed]);
 
   function submit(e?:FormEvent){
     e?.preventDefault();

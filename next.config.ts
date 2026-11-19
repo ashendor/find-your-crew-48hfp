@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
+const supabaseHost = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gtytlzylsohpeuewqjuw.supabase.co').hostname; }
+  catch { return 'gtytlzylsohpeuewqjuw.supabase.co'; }
+})();
+
 const nextConfig: NextConfig = {
   basePath: '/48hrproject',
+  images: {
+    formats: ['image/webp'],
+    remotePatterns: [
+      {protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/crew-avatars/**'},
+    ],
+  },
   async redirects() {
     return [
       {source: '/dashboard', destination: '/home', permanent: false},

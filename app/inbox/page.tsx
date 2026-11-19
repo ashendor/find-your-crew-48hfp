@@ -7,11 +7,13 @@ import HeaderActions from '@/components/HeaderActions';
 import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
 import {projectTitle,schemaMissing,type Connection,type Creator,type Project} from '@/lib/crew-types';
+import {leadJoinRequests} from '@/lib/team-joins';
 import ChatThread from '@/components/ChatThread';
 import '../platform.css';
 
 type Message = {id:string;connection_id?:string;project_id?:string;sender_id:string;body:string;created_at:string};
 type Invite = {id:string;kind:'crew'|'project';label:string;role:string};
+type JoinRequest = {id:string;user_id:string;team:string;created_at:string};
 type ChatTarget = {kind:'dm'|'project';id:string;name:string};
 const HIDE_KEY = 'lm:inbox-hidden';
 
@@ -27,6 +29,7 @@ export default function InboxPage(){
   const [people,setPeople] = useState<Record<string,Creator>>({});
   const [projects,setProjects] = useState<Record<string,Project>>({});
   const [invites,setInvites] = useState<Invite[]>([]);
+  const [joinRequests,setJoinRequests] = useState<JoinRequest[]>([]);
   const [projectChats,setProjectChats] = useState<Project[]>([]);
   const [thread,setThread] = useState<string|null>(null);
   const [latest,setLatest] = useState<Record<string,Message>>({});
@@ -39,6 +42,8 @@ export default function InboxPage(){
   const [notice,setNotice] = useState('');
   const [error,setError] = useState('');
   const [pending,setPending] = useState<ChatTarget|null>(null);
+  const [compose,setCompose] = useState(false);
+  const [composeQuery,setComposeQuery] = useState('');
   const [hides,setHides] = useState<Record<string,string>>({});
   const sending = useRef(false);
 
@@ -58,7 +63,9 @@ export default function InboxPage(){
       for (const row of (data || []) as Message[]) if (row.connection_id && !latestMap[row.connection_id]) latestMap[row.connection_id] = row;
     }
     setLatest(latestMap);
-    const ids = Array.from(new Set(list.flatMap(item => [item.requester_id, item.recipient_id]).filter(id => id !== userId)));
+    const joins = await leadJoinRequests(client, userId);
+    setJoinRequests(joins);
+    const ids = Array.from(new Set([...list.flatMap(item => [item.requester_id, item.recipient_id]), ...joins.map(row => row.user_id)].filter(id => id !== userId)));
     if (ids.length) {
       const {data} = await client.from('profiles').select('*').in('id', ids);
       setPeople(Object.fromEntries(((data || []) as Creator[]).map(person => [person.id, person])));
@@ -106,6 +113,22 @@ export default function InboxPage(){
     ]);
   }, [client, userId]);
   useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get('tab');
+    if (asked === 'requests' || asked === 'invites' || asked === 'messages') setTab(asked);
+    const openRequests = () => { setTab('requests'); void refresh(); };
+    const poke = () => { if (document.visibilityState === 'visible') void refresh(); };
+    window.addEventListener('lm:requests', openRequests);
+    window.addEventListener('focus', poke);
+    document.addEventListener('visibilitychange', poke);
+    const timer = window.setInterval(poke, 15000);
+    return () => {
+      window.removeEventListener('lm:requests', openRequests);
+      window.removeEventListener('focus', poke);
+      document.removeEventListener('visibilitychange', poke);
+      window.clearInterval(timer);
+    };
+  }, [refresh]);
   useEffect(() => { try { setSeen(JSON.parse(sessionStorage.getItem('lm:inbox-seen') || '{}')); } catch { setSeen({}); } }, []);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('chat');
@@ -147,6 +170,14 @@ export default function InboxPage(){
     setBusy(false);
     if (updateError) setError(updateError.message);
     else { setNotice(status === 'accepted' ? 'You’re connected. Chat is open. No team or project was joined.' : 'Request declined.'); void refresh(); }
+  }
+  async function answerJoin(id:string, accept:boolean){
+    if (!client || busy) return;
+    setBusy(true); setError('');
+    const {error:rpcError} = await client.rpc('respond_team_join', {p_request:id, p_accept:accept});
+    setBusy(false);
+    if (rpcError) setError(schemaMissing(rpcError) ? 'Run the latest LikeMinds SQL update before you can approve a team request.' : rpcError.message);
+    else { setNotice(accept ? 'They’re on the team. No project was joined.' : 'Request declined.'); void refresh(); }
   }
   async function respondInvite(invite:Invite, status:'accepted'|'declined'){
     if (!client || busy) return;
@@ -254,6 +285,14 @@ export default function InboxPage(){
   ].filter(row => !concealed(row.kind + ':' + row.id, row.at)).sort((a, b) => +new Date(b.at) - +new Date(a.at));
   const openThread = (id:string) => {
     setThread(id);
+    setHides(prev => {
+      if (!prev['dm:' + id]) return prev;
+      const next = {...prev};
+      delete next['dm:' + id];
+      localStorage.setItem(HIDE_KEY, JSON.stringify(next));
+      return next;
+    });
+    if (client) void client.from('direct_chat_hides').delete().eq('user_id', userId).eq('connection_id', id);
     const url = new URL(window.location.href);
     url.searchParams.set('chat', id);
     window.history.replaceState(null, '', url.pathname + url.search);
@@ -282,8 +321,8 @@ export default function InboxPage(){
   return <PlatformShell>
     <div className={'lm-inbox-screen' + (tab === 'messages' ? ' is-split' : '') + (threadOpen ? ' is-open' : '')}>
     <div className="lm-inbox-pane">
-    <header className="lm-top lm-inbox-head"><h1>Inbox</h1><HeaderActions /></header>
-    <Tabs label="Inbox" current={tab} onChange={item => { setTab(item as typeof tab); closeThread(); }} items={[{id:'messages', label:'Messages'},{id:'requests', label:'Requests', dot:requests.length > 0},{id:'invites', label:'Invites'}]} />
+    <header className="lm-top lm-inbox-head"><h1>Inbox</h1><div className="lm-nav-actions">{tab === 'messages' && <button className="lm-iconbtn" type="button" aria-label="New message" onClick={() => { setComposeQuery(''); setCompose(true); }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>}<HeaderActions /></div></header>
+    <Tabs label="Inbox" current={tab} onChange={item => { setTab(item as typeof tab); closeThread(); }} items={[{id:'messages', label:'Messages'},{id:'requests', label:'Requests', dot:requests.length + joinRequests.length > 0},{id:'invites', label:'Invites'}]} />
     {error && !threadOpen && <p className="fc-error" role="alert">{error}</p>}
     {notice && !threadOpen && <p className="lm-note" role="status">{notice}</p>}
     {tab === 'messages' && <div className="lm-inbox">
@@ -308,6 +347,13 @@ export default function InboxPage(){
       {!!conversations.length && !visible.length && <p className="lm-muted">No conversation matches that search.</p>}
     </div>}
     {tab === 'requests' && <>
+      {joinRequests.map(item => <article className="lm-request" key={item.id}>
+        <div className="lm-inbox-row">
+          <div className="lm-inbox-open">{face(people[item.user_id])}<div><strong>{people[item.user_id]?.display_name || 'Creator'}</strong><p>Wants to join {item.team}</p></div></div>
+          <div className="lm-inbox-meta"><time>{ago(item.created_at)}</time><i className="lm-unread" aria-label="New"/></div>
+        </div>
+        <div className="lm-actions lm-pair"><button className="lm-btn" type="button" disabled={busy} onClick={() => void answerJoin(item.id, true)}>Approve</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void answerJoin(item.id, false)}>Decline</button></div>
+      </article>)}
       {requests.map(item => <article className="lm-request" key={item.id}>
         <div className="lm-inbox-row">
           <div className="lm-inbox-open">{face(other(item))}<div><strong>{other(item)?.display_name || 'Creator'}</strong><p>{preview(item)}{item.team_name ? ' · ' + item.team_name : ''}</p></div></div>
@@ -315,7 +361,7 @@ export default function InboxPage(){
         </div>
         <div className="lm-actions lm-pair"><button className="lm-btn" type="button" disabled={busy} onClick={() => void respond(item.id,'accepted')}>Accept</button><button className="lm-btn-line" type="button" disabled={busy} onClick={() => void respond(item.id,'declined')}>Decline</button></div>
       </article>)}
-      {!requests.length && <div className="lm-empty"><strong>No requests waiting</strong><p>When someone wants to connect, you can accept or decline it here.</p></div>}
+      {!requests.length && !joinRequests.length && <div className="lm-empty"><strong>No requests waiting</strong><p>Connection requests and requests to join your team show up here.</p></div>}
     </>}
     {tab === 'invites' && <>
       {invites.map(invite => <article className="lm-request" key={invite.kind + invite.id}>
@@ -346,6 +392,29 @@ export default function InboxPage(){
     />}
     {tab === 'messages' && !threadOpen && <div className="lm-chat-placeholder"><div><strong>Your conversations</strong><p>Choose someone to continue the chat.</p></div></div>}
     </div>
+    {compose && <div className="lm-sheet" role="presentation" onClick={() => setCompose(false)}>
+      <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-new-message" onClick={e => e.stopPropagation()}>
+        <div className="lm-grab" aria-hidden="true" />
+        <h2 id="lm-new-message">New message</h2>
+        <p className="lm-muted">Choose someone you’re already connected with.</p>
+        {accepted.length > 0 && <label className="lm-find-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8178" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input aria-label="Search connections" placeholder="Search connections" value={composeQuery} onChange={e => setComposeQuery(e.target.value)} />
+        </label>}
+        <div className="lm-hits">
+          {accepted.filter(item => (other(item)?.display_name || '').toLowerCase().includes(composeQuery.trim().toLowerCase())).map(item => {
+            const person = other(item);
+            return <button className="lm-hit" type="button" key={item.id} onClick={() => { setCompose(false); openThread(item.id); }}>
+              {face(person)}
+              <span><strong>{person?.display_name || 'Creator'}</strong><p>{person?.primary_role || 'Connected'}</p></span>
+            </button>;
+          })}
+        </div>
+        {!accepted.length && <div className="lm-empty"><strong>No connections yet</strong><p>Once someone accepts, you can start a chat with them here.</p><Link className="lm-btn" href="/explore" onClick={() => setCompose(false)}>Find people</Link></div>}
+        {!!accepted.length && !accepted.some(item => (other(item)?.display_name || '').toLowerCase().includes(composeQuery.trim().toLowerCase())) && <p className="lm-muted">No connection matches that search.</p>}
+        <button className="lm-btn-line" type="button" onClick={() => setCompose(false)}>Cancel</button>
+      </div>
+    </div>}
     {pending && <div className="lm-sheet" role="presentation" onClick={() => setPending(null)}>
       <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-delete-chat" onClick={e => e.stopPropagation()}>
         <div className="lm-grab" aria-hidden="true" />

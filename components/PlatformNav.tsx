@@ -1,8 +1,10 @@
 'use client';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import type {ReactNode} from 'react';
+import {useEffect, useState, type ReactNode} from 'react';
 import {NavigationTrail} from '@/components/BackButton';
+import CreateSheet from '@/components/CreateSheet';
+import Motion from '@/components/Motion';
 import {WebSide, WebTop} from '@/components/WebChrome';
 
 const items = [
@@ -24,17 +26,24 @@ function Icon({name}:{name:string}){
 
 export default function PlatformNav(){
   const path = usePathname();
+  const [open, setOpen] = useState(false);
+  useEffect(() => { setOpen(false); }, [path]);
   const current = (href:string) => {
     if (href === '/profile' && (path.startsWith('/crews') || path.startsWith('/teams') || path.startsWith('/projects') || path.startsWith('/creators'))) return true;
     return path === href || path.startsWith(href + '/');
   };
-  return <nav className="lm-bottom" aria-label="LikeMinds">
-    {items.map(item => <Link key={item.href} href={item.href} className={'plus' in item ? 'lm-plus' : undefined} aria-label={item.label} aria-current={current(item.href) ? 'page' : undefined}>
-      <Icon name={'plus' in item ? 'plus' : item.label.toLowerCase()} />
-    </Link>)}
-  </nav>;
+  return <>
+    <CreateSheet open={open} onClose={() => setOpen(false)} />
+    <nav className="lm-bottom" aria-label="LikeMinds">
+      {items.map(item => 'plus' in item ? <button key={item.href} className="lm-plus" type="button" aria-label="Create" aria-expanded={open} onClick={() => setOpen(value => !value)}>
+        <Icon name="plus" />
+      </button> : <Link key={item.href} href={item.href} aria-label={item.label} aria-current={current(item.href) ? 'page' : undefined}>
+        <Icon name={item.label.toLowerCase()} />
+      </Link>)}
+    </nav>
+  </>;
 }
 
 export function PlatformShell({children}:{children:ReactNode}){
-  return <div className="lm-page"><NavigationTrail /><div className="lm-frame"><WebSide /><div className="lm-stage"><WebTop /><main className="lm-main">{children}</main></div><PlatformNav/></div></div>;
+  return <div className="lm-page"><NavigationTrail /><div className="lm-frame"><WebSide /><div className="lm-stage"><WebTop /><main className="lm-main"><Motion>{children}</Motion></main></div><PlatformNav/></div></div>;
 }
