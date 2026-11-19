@@ -7,6 +7,7 @@ import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
 import type {Crew} from '@/lib/crew-types';
+import TeamCopy from '@/components/TeamCopy';
 import '../platform.css';
 
 export default function TeamsPage(){
@@ -37,7 +38,7 @@ export default function TeamsPage(){
         <Link className="lm-addchip" href="/create?mode=team"><span aria-hidden="true">+</span>Add</Link>
       </div>
       <div className="lm-teamcard">
-        {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? 'You lead this team' : 'Member')}</p></div></Link>)}
+        {teams.map(team => <Link className="lm-rowitem lm-teamline" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><TeamCopy name={team.name} description={team.description} member /></div></Link>)}
       </div>
     </section>}
   </PlatformShell>;

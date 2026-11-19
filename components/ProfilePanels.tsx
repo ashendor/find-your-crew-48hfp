@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {getCrewSupabase} from '@/lib/crew-supabase';
 import {projectTitle,type Project} from '@/lib/crew-types';
+import TeamCopy from '@/components/TeamCopy';
 
 type TeamRow = {id:string;name:string;description:string;owner_id:string};
 
@@ -49,7 +50,7 @@ export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab
       {owner && <Link className="lm-addchip" href="/create?mode=team"><span aria-hidden="true">+</span>Add</Link>}
     </div>
     <div className="lm-teamcard">
-      {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? (owner ? 'You lead this team' : 'Leads this team') : 'Member')}</p></div></Link>)}
+      {teams.map(team => <Link className="lm-rowitem lm-teamline" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><TeamCopy name={team.name} description={team.description} member /></div></Link>)}
     </div>
   </section>;
 }

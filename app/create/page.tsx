@@ -33,7 +33,7 @@ export default function CreatePage(){
     <form onSubmit={e => void createCrew(e)}>
       <label>Team name<input className="lm-field" name="name" required minLength={2} maxLength={70} /></label>
       <label>Description (optional)<textarea className="lm-field" name="description" maxLength={300} rows={3} /></label>
-      <p className="lm-muted">This is the only place a team is created. Register it for the featured project from the team page.</p>
+      <p className="lm-muted">After the team exists, register it on the featured project. People can then open it and request to join.</p>
       <div className="lm-row"><button className="lm-btn" disabled={busy}>Create team</button></div>
     </form>
     </div></div>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   keywords: ["48 hour film project", "Dubai", "filmmaking", "film crew", "collaboration"],
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", interactiveWidget: "resizes-content" };
 
 export default function RootLayout({
   children,

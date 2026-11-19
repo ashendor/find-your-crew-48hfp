@@ -10,6 +10,7 @@ import Tabs from '@/components/Tabs';
 import {useCrewUser} from '@/lib/use-crew';
 import {OFFICIAL_TEAM_URL,ROLES,projectTitle,schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
 import ChatThread from '@/components/ChatThread';
+import TeamCopy from '@/components/TeamCopy';
 import '../../platform.css';
 
 type Member = {id:string;user_id:string;role:string;status:string;invited_by:string|null};
@@ -25,7 +26,8 @@ function ProjectScreen(){
   const [links,setLinks] = useState<{id:string;title:string;url:string}[]>([]);
   const [chats,setChats] = useState<Chat[]>([]);
   const [crews,setCrews] = useState<Crew[]>([]);
-  const [linked,setLinked] = useState<string[]>([]);
+  const [registered,setRegistered] = useState<Crew[]>([]);
+  const [joined,setJoined] = useState<Set<string>>(new Set());
   const [error,setError] = useState('');
   const [notice,setNotice] = useState('');
   const [busy,setBusy] = useState(false);
@@ -37,15 +39,23 @@ function ProjectScreen(){
     const {data,error:projectError} = await client.from('projects').select('*').eq('id', id).maybeSingle();
     if (projectError || !data) { setError(projectError?.message || 'Project not found.'); return; }
     setProject(data as Project);
-    const [memberRows, linkRows, crewRows, association] = await Promise.all([
+    const [memberRows, linkRows, crewRows, association, joinedRows] = await Promise.all([
       client.from('project_members').select('*').eq('project_id', id),
       client.from('project_links').select('id,title,url').eq('project_id', id),
       client.from('crews').select('*').eq('owner_id', userId),
-      client.from('crew_projects').select('crew_id').eq('project_id', id),
+      client.from('crew_projects').select('crews(id,name,description,owner_id,created_at)').eq('project_id', id),
+      client.from('crew_members').select('crew_id').eq('user_id', userId).eq('status', 'accepted'),
     ]);
     const list = (memberRows.data || []) as Member[];
-    setMembers(list); setLinks(linkRows.data || []); setCrews((crewRows.data || []) as Crew[]);
-    setLinked((association.data || []).map(row => row.crew_id));
+    const owned = (crewRows.data || []) as Crew[];
+    setMembers(list); setLinks(linkRows.data || []); setCrews(owned);
+    const onProject = ((association.data || []) as {crews:Crew|Crew[]|null}[])
+      .map(row => Array.isArray(row.crews) ? row.crews[0] : row.crews)
+      .filter((crew): crew is Crew => !!crew);
+    setRegistered(onProject);
+    const mine = new Set(((joinedRows.data || []) as {crew_id:string}[]).map(row => row.crew_id));
+    for (const crew of owned) mine.add(crew.id);
+    setJoined(mine);
     const ids = list.map(member => member.user_id);
     if (ids.length) {
       const {data:profiles} = await client.from('profiles').select('*').in('id', ids);
@@ -145,7 +155,8 @@ function ProjectScreen(){
   async function linkCrew(crewId:string){
     if (!client || !crewId) return;
     const {error:insertError} = await client.from('crew_projects').insert({crew_id:crewId, project_id:id});
-    if (insertError) setError(insertError.message); else { setNotice('Team linked to this project. Members were not added automatically.'); void load(); }
+    if (insertError) setError(insertError.message);
+    else { setRegisterOpen(false); setNotice(project?.name ? 'Team registered. It now shows on this project, and people can request to join it.' : 'Team registered.'); void load(); }
   }
 
   const stamp = (value?:string|null) => {
@@ -176,7 +187,7 @@ function ProjectScreen(){
       <p className="lm-kicker">{project.featured ? 'Featured project' : 'Project'}</p>
       <h1>{projectTitle(project)}</h1>
     </header>
-    <Tabs label="Project" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'overview', label:'Overview'},{id:'team', label:'Team'},{id:'links', label:'Links'},{id:'chat', label:'Chat'}]} />
+    <Tabs label="Project" current={tab} onChange={item => setTab(item as typeof tab)} items={[{id:'overview', label:'Overview'},{id:'team', label:'Teams'},{id:'links', label:'Links'},{id:'chat', label:'Chat'}]} />
     {error && <p className="lm-alert" role="alert">{error}</p>}
     {notice && <p className="lm-note" role="status">{notice}</p>}
     {tab === 'overview' && <div className="lm-card lm-brief">
@@ -195,11 +206,11 @@ function ProjectScreen(){
       {project.featured && <section>
         <h2>Official registration</h2>
         <p>When the team is ready, register it on the official site.</p>
-        <button className="lm-linkrow" type="button" onClick={() => setRegisterOpen(true)}>
+        <a className="lm-linkrow" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer">
           <span className="lm-linkmark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 5h5v5"/><path d="M19 5 10 14"/><path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5"/></svg></span>
-          <span><strong>Register your team</strong><small>{officialHost}</small></span>
+          <span><strong>Continue on the official site</strong><small>{officialHost}</small></span>
           <em aria-hidden="true">↗</em>
-        </button>
+        </a>
       </section>}
       <section>
         <h2>Team name</h2>
@@ -221,20 +232,18 @@ function ProjectScreen(){
       {member?.status === 'accepted' && project.owner_id !== userId && <button className="lm-danger" type="button" disabled={busy} onClick={() => void leaveProject()}>Leave this project</button>}
     </div>}
     {tab === 'team' && <div>
+      {project.featured && <>
+        {registered.map(crew => <Link className="lm-rowitem lm-teamline" key={crew.id} href={'/teams/' + crew.id}><span className="lm-avatar">{crew.name.slice(0,1)}</span><div><TeamCopy name={crew.name} description={crew.description} member={joined.has(crew.id)} /></div></Link>)}
+        {!registered.length && <div className="lm-empty"><strong>No teams registered yet</strong><p>Register a team and it will show here. People can open it and request to join.</p></div>}
+      </>}
       {members.map(item => <article className="lm-rowitem" key={item.id}>{people[item.user_id]?.avatar_url ? <img src={people[item.user_id].avatar_url || ''} alt="" /> : <span className="lm-avatar">{(people[item.user_id]?.display_name || 'C').slice(0,1)}</span>}<div><strong>{people[item.user_id]?.display_name || 'Creator'}</strong><p>{item.role} · {item.status}</p></div></article>)}
-      {!members.length && <div className="lm-empty"><strong>No one on the team yet</strong><p>Invitations stay pending until someone accepts. A connection alone does not add them.</p></div>}
+      {!project.featured && !members.length && <div className="lm-empty"><strong>No one on the team yet</strong><p>Invitations stay pending until someone accepts. A connection alone does not add them.</p></div>}
       {project.owner_id === userId && <form className="lm-card lm-form" style={{marginTop:18}} onSubmit={e => void invite(e)}>
         <h2>Invite a creator</h2>
         <label>Handle<input className="lm-field" name="handle" required placeholder="username" /></label>
         <label>Role<select className="lm-field" name="role" defaultValue="Producer">{ROLES.map(role => <option key={role}>{role}</option>)}</select></label>
         <button className="lm-btn" type="submit">Send invitation</button>
       </form>}
-      {project.featured && crews.length > 0 && <label className="lm-block" style={{marginTop:16}}>Register a team you own
-        <select className="lm-field" defaultValue="" onChange={e => void linkCrew(e.target.value)}>
-          <option value="">Choose a team</option>
-          {crews.filter(crew => !linked.includes(crew.id)).map(crew => <option key={crew.id} value={crew.id}>{crew.name}</option>)}
-        </select>
-      </label>}
     </div>}
     {tab === 'links' && <div>
       {links.map(link => <a className="lm-rowitem" key={link.id} href={link.url} target="_blank" rel="noopener noreferrer"><span className="lm-avatar">↗</span><div><strong>{link.title}</strong><p>{link.url.replace(/^https?:\/\//, '')}</p></div></a>)}
@@ -250,15 +259,12 @@ function ProjectScreen(){
     {registerOpen && <div className="lm-sheet" role="presentation" onClick={() => setRegisterOpen(false)}>
       <div className="lm-sheet-panel lm-register" role="dialog" aria-modal="true" aria-labelledby="lm-register-team" onClick={e => e.stopPropagation()}>
         <div className="lm-grab" aria-hidden="true" />
-        <h2 id="lm-register-team">This opens another website</h2>
-        <p>Registration happens on the official 48 Hour Film Project site, not on LikeMinds.</p>
-        <ul className="lm-points">
-          <li>Continue only if you have found your team and you are ready to register.</li>
-          <li>Enter the same team name there. Do not use a different name.</li>
-        </ul>
-        {crews.length > 0 && <p>{crews.length === 1 ? 'Your team name here is ' + crews[0].name + '.' : 'Your team names here are ' + crews.map(crew => crew.name).join(', ') + '.'}</p>}
-        <a className="lm-btn" href={OFFICIAL_TEAM_URL} target="_blank" rel="noopener noreferrer" onClick={() => setRegisterOpen(false)}>Continue to the official site</a>
-        <button className="lm-btn-line" type="button" onClick={() => setRegisterOpen(false)}>Stay here</button>
+        <h2 id="lm-register-team">Register your team?</h2>
+        <p>Your team will show on this project. People can open it, see who is on it, and request to join.</p>
+        {crews.filter(crew => !registered.some(item => item.id === crew.id)).map(crew => <button className="lm-btn" type="button" key={crew.id} disabled={busy} onClick={() => void linkCrew(crew.id)}>Register {crew.name}</button>)}
+        {!!crews.length && crews.every(crew => registered.some(item => item.id === crew.id)) && <p>Your team is already registered for this project.</p>}
+        <Link className={crews.length ? 'lm-btn-line' : 'lm-btn'} href="/create" onClick={() => setRegisterOpen(false)}>{crews.length ? 'Create another team' : 'Create a team'}</Link>
+        <button className="lm-btn-line" type="button" onClick={() => setRegisterOpen(false)}>Not now</button>
       </div>
     </div>}
   </PlatformShell>;

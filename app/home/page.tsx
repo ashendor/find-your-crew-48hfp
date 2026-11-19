@@ -6,6 +6,7 @@ import {FilmLoader} from '@/components/FilmLoader';
 import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
 import {projectTitle,schemaMissing,type Creator,type Crew,type Project} from '@/lib/crew-types';
+import TeamCopy from '@/components/TeamCopy';
 import '../platform.css';
 import { withBasePath } from '@/lib/base-path';
 
@@ -31,6 +32,7 @@ export default function LikeMindsHome(){
   const [mine,setMine] = useState<Project[]>([]);
   const [teams,setTeams] = useState<Crew[]>([]);
   const [people,setPeople] = useState<Creator[]>([]);
+  const [projectTeams,setProjectTeams] = useState<Crew[]>([]);
   const [setup,setSetup] = useState('');
   useEffect(() => {
     if (!client || !userId) return;
@@ -44,7 +46,16 @@ export default function LikeMindsHome(){
         client.from('profiles').select('*').eq('onboarding_complete',true).neq('id',userId).limit(8),
       ]);
       if (schemaMissing(featured.error)) setSetup('Projects appear here after the LikeMinds database update.');
-      setProjects((featured.data || []) as Project[]);
+      const featuredProjects = (featured.data || []) as Project[];
+      setProjects(featuredProjects);
+      const heroId = featuredProjects[0]?.id;
+      if (heroId) {
+        const registered = await client.from('crew_projects').select('crews(id,name,description,owner_id,created_at)').eq('project_id', heroId);
+        const names = ((registered.data || []) as {crews:Crew|Crew[]|null}[])
+          .map(row => Array.isArray(row.crews) ? row.crews[0] : row.crews)
+          .filter((team): team is Crew => !!team);
+        setProjectTeams(names);
+      } else setProjectTeams([]);
       const joined = ((members.data || []) as {projects: Project | Project[] | null}[]).map(row => Array.isArray(row.projects) ? row.projects[0] : row.projects).filter(Boolean) as Project[];
       const map = new Map<string,Project>();
       for (const project of [...((owned.data || []) as Project[]), ...joined]) map.set(project.id, project);
@@ -77,11 +88,15 @@ export default function LikeMindsHome(){
       <img src={withBasePath("/brand/past-jbr-finals.jpg")} alt="" />
       <div className="lm-feature-date"><span>{dates(shown.starts_on, shown.ends_on)}</span><span aria-hidden="true">→</span></div>
     </Link>
+    {hero && projectTeams.length > 0 && <section>
+      <div className="lm-section"><h2>Teams</h2></div>
+      {projectTeams.map(team => <Link className="lm-rowitem lm-teamline" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><TeamCopy name={team.name} description={team.description} member={teams.some(item => item.id === team.id)} /></div></Link>)}
+    </section>}
     {setup && <p className="lm-note" style={{marginTop:10}}>{setup}</p>}
     {(mine.length > 0 || teams.length > 0) && <section>
       <div className="lm-section"><h2>Yours</h2></div>
       {mine.map(project => <Link className="lm-rowitem" key={project.id} href={'/projects/' + project.id}><span className="lm-avatar">{projectTitle(project).slice(0,1)}</span><div><strong>{projectTitle(project)}</strong><p>Featured project</p></div></Link>)}
-      {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>Team</p></div></Link>)}
+      {teams.map(team => <Link className="lm-rowitem lm-teamline" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><TeamCopy name={team.name} description={team.description} member /></div></Link>)}
     </section>}
     {people.length > 0 && <section>
       <div className="lm-section"><h2>Suggested people</h2><Link href="/explore">See all</Link></div>

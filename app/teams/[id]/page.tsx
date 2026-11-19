@@ -8,7 +8,7 @@ import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import {armLoader} from '@/components/RouteLoader';
 import {useCrewUser} from '@/lib/use-crew';
-import {ROLES,projectTitle,schemaMissing,type Connection,type Crew,type Creator,type Project} from '@/lib/crew-types';
+import {projectTitle,schemaMissing,type Connection,type Crew,type Creator,type Project} from '@/lib/crew-types';
 import '../../platform.css';
 
 const SHARE_URL = 'https://likeminds.ae/48hrproject';
@@ -32,11 +32,12 @@ function TeamScreen(){
   const [directory,setDirectory] = useState<Creator[]>([]);
   const [links,setLinks] = useState<Connection[]>([]);
   const [query,setQuery] = useState('');
-  const [role,setRole] = useState('Producer');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [notice,setNotice] = useState('');
   const [missing,setMissing] = useState(false);
+  const [myRequest,setMyRequest] = useState(false);
+  const [applications,setApplications] = useState<{id:string;user_id:string}[]>([]);
   const load = useCallback(async () => {
     if (!client || !id) return;
     const {data,error:teamError} = await client.from('crews').select('*').eq('id', id).maybeSingle();
@@ -55,10 +56,23 @@ function TeamScreen(){
     const ids = Array.from(new Set([data.owner_id, ...list.map(member => member.user_id)]));
     if (ids.length) {
       const {data:profiles} = await client.from('profiles').select('*').in('id', ids);
-      setPeople(Object.fromEntries(((profiles || []) as Creator[]).map(person => [person.id, person])));
+      setPeople(current => ({...current, ...Object.fromEntries(((profiles || []) as Creator[]).map(person => [person.id, person]))}));
     }
   }, [client, id]);
   useEffect(() => { void load(); }, [load]);
+  const reloadJoins = useCallback(async () => {
+    if (!client || !id || !userId || !team) return;
+    const {data, error:joinError} = await client.from('team_join_requests').select('id,user_id,status').eq('crew_id', id).eq('status','pending');
+    if (schemaMissing(joinError)) { setMyRequest(false); setApplications([]); return; }
+    const rows = (data || []) as {id:string;user_id:string;status:string}[];
+    setMyRequest(rows.some(row => row.user_id === userId));
+    const waiting = team.owner_id === userId ? rows.filter(row => row.user_id !== userId) : [];
+    setApplications(waiting);
+    if (!waiting.length) return;
+    const {data:profiles} = await client.from('profiles').select('*').in('id', waiting.map(row => row.user_id));
+    setPeople(current => ({...current, ...Object.fromEntries(((profiles || []) as Creator[]).map(person => [person.id, person]))}));
+  }, [client, id, userId, team]);
+  useEffect(() => { void reloadJoins(); }, [reloadJoins]);
   const owner = team?.owner_id === userId;
   useEffect(() => {
     if (!client || !owner || !userId) return;
@@ -88,7 +102,7 @@ function TeamScreen(){
   async function invitePerson(person:Creator){
     if (!client || !owner || busy || membership(person.id)) return;
     setBusy(true); setError(''); setNotice('');
-    const {error:insertError} = await client.from('crew_members').insert({crew_id:id, user_id:person.id, invited_by:userId, role, status:'invited'});
+    const {error:insertError} = await client.from('crew_members').insert({crew_id:id, user_id:person.id, invited_by:userId, role:person.primary_role || 'Member', status:'invited'});
     setBusy(false);
     if (insertError) setError(insertError.code === '23505' ? 'They already have an invitation.' : insertError.message);
     else { setNotice('Invitation sent. They become part of the team only after they accept.'); void load(); }
@@ -143,6 +157,24 @@ function TeamScreen(){
     armLoader(); router.replace('/teams');
   }
 
+  async function requestJoin(){
+    if (!client || owner || busy || myRequest) return;
+    setBusy(true); setError(''); setNotice('');
+    const {error:rpcError} = await client.rpc('request_team_join', {p_crew:id});
+    setBusy(false);
+    if (rpcError) setError(schemaMissing(rpcError) ? 'Run the latest LikeMinds SQL update before you can request to join a team.' : rpcError.message);
+    else { setMyRequest(true); setNotice('Request sent. You join this team only after the team lead approves it.'); }
+  }
+
+  async function answerJoin(requestId:string, accept:boolean){
+    if (!client || !owner || busy) return;
+    setBusy(true); setError(''); setNotice('');
+    const {error:rpcError} = await client.rpc('respond_team_join', {p_request:requestId, p_accept:accept});
+    setBusy(false);
+    if (rpcError) setError(schemaMissing(rpcError) ? 'Run the latest LikeMinds SQL update before you can approve a team request.' : rpcError.message);
+    else { setNotice(accept ? 'They’re on the team.' : 'Request declined.'); void load(); }
+  }
+
   async function register(projectId:string){
     if (!client || !owner) return;
     setError(''); setNotice('');
@@ -157,15 +189,26 @@ function TeamScreen(){
       <p className="lm-kicker">Team</p>
       <h1>{team.name}</h1>
     </header>
-    <div className="lm-card" style={{marginTop:16}}><p>{team.description || 'A team can register for the featured project. People join only when they accept an invitation.'}</p></div>
+    <div className="lm-card" style={{marginTop:16}}><p>{team.description || 'People join this team when an invitation is accepted, or when the team lead approves a request.'}</p></div>
     {error && <p className="lm-alert" role="alert">{error}</p>}
     {notice && <p className="lm-note" role="status">{notice}</p>}
     <section>
       <div className="lm-section"><h2>People</h2></div>
       <PersonRow person={people[team.owner_id]} fallback="Owner" detail="Owner" />
-      {members.filter(member => member.status === 'accepted' || member.status === 'invited').map(member => <PersonRow key={member.id} person={people[member.user_id]} fallback="Member" detail={member.status === 'invited' ? 'Invited · ' + member.role : member.role || 'Member'} />)}
-      {!members.some(member => member.status === 'accepted') && <p className="lm-muted">No one else is on this team yet. An invitation adds someone only after they accept.</p>}
+      {members.filter(member => member.status === 'accepted' || (owner && member.status === 'invited')).map(member => <PersonRow key={member.id} person={people[member.user_id]} fallback="Member" detail={member.status === 'invited' ? 'Invited · ' + member.role : member.role || 'Member'} />)}
+      {!members.some(member => member.status === 'accepted') && <p className="lm-muted">No one else is on this team yet.</p>}
+      {!owner && !members.some(member => member.user_id === userId && member.status === 'accepted') && <button className="lm-btn" type="button" style={{marginTop:12}} disabled={busy || myRequest} onClick={() => void requestJoin()}>{myRequest ? 'Requested' : 'Request to join'}</button>}
     </section>
+    {owner && applications.length > 0 && <section>
+      <div className="lm-section"><h2>Requests to join</h2></div>
+      {applications.map(application => <div key={application.id}>
+        <PersonRow person={people[application.user_id]} fallback="Creator" detail="Wants to join this team" />
+        <div className="lm-actions lm-pair">
+          <button className="lm-btn" type="button" disabled={busy} onClick={() => void answerJoin(application.id, true)}>Approve</button>
+          <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void answerJoin(application.id, false)}>Decline</button>
+        </div>
+      </div>)}
+    </section>}
     {owner && <section>
       <div className="lm-section"><h2>Find someone</h2></div>
       <div className="lm-find">
@@ -173,7 +216,6 @@ function TeamScreen(){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8178" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
           <input aria-label="Search people on LikeMinds" placeholder="Search by name or role" value={query} onChange={e => setQuery(e.target.value)} />
         </label>
-        <label className="lm-block">Invite as<select className="lm-field" value={role} onChange={e => setRole(e.target.value)}>{ROLES.map(item => <option key={item}>{item}</option>)}</select></label>
         <p className="lm-muted">Connect only starts a request. Invite adds them to this team after they accept in their inbox.</p>
         {hits.map(person => {
           const spot = membership(person.id);
