@@ -30,8 +30,15 @@ export default function TeamsPage(){
   if (loading || !user) return <FilmLoader delay={600} />;
   return <PlatformShell>
     <header className="lm-top"><BackButton fallback="/profile?tab=teams" /><h1 className="lm-bar-title">Teams</h1><HeaderActions /></header>
-    {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? 'You lead this team' : 'Member')}</p></div></Link>)}
     {!teams.length && <div className="lm-empty"><strong>No teams yet</strong><p>Create one when you are ready to work together. A name on a connection request does not make a team.</p><Link className="lm-btn" href="/create?mode=team">Create a team</Link></div>}
-    {teams.length > 0 && <Link className="lm-addline" href="/create?mode=team">Add a team</Link>}
+    {teams.length > 0 && <section className="lm-teamlist" aria-label="Your teams">
+      <div className="lm-teamhead">
+        <div><h2>Your teams</h2><p>{teams.length === 1 ? '1 team' : teams.filter(team => team.owner_id === userId).length === teams.length ? 'You lead ' + teams.length : teams.length + ' teams'}</p></div>
+        <Link className="lm-addchip" href="/create?mode=team"><span aria-hidden="true">+</span>Add</Link>
+      </div>
+      <div className="lm-teamcard">
+        {teams.map(team => <Link className="lm-rowitem" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><strong>{team.name}</strong><p>{team.description || (team.owner_id === userId ? 'You lead this team' : 'Member')}</p></div></Link>)}
+      </div>
+    </section>}
   </PlatformShell>;
 }

@@ -5,6 +5,7 @@ import {usePathname, useRouter} from 'next/navigation';
 import {getCrewSupabase} from '@/lib/crew-supabase';
 import {armLoader} from '@/components/RouteLoader';
 import {projectTitle,type Creator,type Project} from '@/lib/crew-types';
+import { appPath, withBasePath } from '@/lib/base-path';
 
 const items = [
   {href:'/home', label:'Home'},
@@ -70,7 +71,7 @@ export function WebSide(){
       {items.map(item => <Link key={item.href} href={item.href} aria-current={current(item.href) ? 'page' : undefined}><Icon name={item.label} />{item.label}{item.href === '/inbox' && dot && <i className="lm-webdot" aria-label="New"/>}</Link>)}
     </nav>
     <Link className="lm-webfeature" href={featured ? '/projects/' + featured.id : '/home'}>
-      <img src="/brand/past-jbr-finals.jpg" alt="" />
+      <img src={withBasePath("/brand/past-jbr-finals.jpg")} alt="" />
       <span>{featured ? projectTitle(featured) : 'Featured project'}<em aria-hidden="true">→</em></span>
     </Link>
   </aside>;
@@ -86,7 +87,7 @@ export function WebTop(){
     const next = new URLSearchParams();
     if (text.trim()) next.set('q', text.trim());
     const dest = '/explore' + (next.toString() ? '?' + next.toString() : '');
-    if (dest !== window.location.pathname + window.location.search) armLoader();
+    if (dest !== appPath(window.location.pathname + window.location.search)) armLoader();
     router.push(dest);
   }
   return <div className="lm-webtop">

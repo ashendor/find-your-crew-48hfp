@@ -4,23 +4,24 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getCrewSupabase } from '@/lib/crew-supabase';
 import SignOutButton from '@/components/SignOutButton';
+import { withBasePath } from '@/lib/base-path';
 
 const people: { name: string; role: string; image: string; locked?: boolean }[] = [
-  { name: 'Alex R.', role: 'Director', image: '/brand/avatar-alex.jpg' },
-  { name: 'Maya C.', role: 'DOP', image: '/brand/avatar-maya.jpg' },
-  { name: 'Jordan B.', role: 'Editor', image: '/brand/avatar-jordan.jpg' },
+  { name: 'Alex R.', role: 'Director', image: withBasePath('/brand/avatar-alex.jpg') },
+  { name: 'Maya C.', role: 'DOP', image: withBasePath('/brand/avatar-maya.jpg') },
+  { name: 'Jordan B.', role: 'Editor', image: withBasePath('/brand/avatar-jordan.jpg') },
 ];
 const list = [
   ...people,
-  { name: 'Priya N.', role: 'Producer', image: '/brand/avatar-priya.jpg', locked: true },
-  { name: 'Ethan C.', role: 'Sound', image: '/brand/avatar-ethan.jpg', locked: true },
+  { name: 'Priya N.', role: 'Producer', image: withBasePath('/brand/avatar-priya.jpg'), locked: true },
+  { name: 'Ethan C.', role: 'Sound', image: withBasePath('/brand/avatar-ethan.jpg'), locked: true },
 ];
 const genres = [
-  ['/brand/poster-heist.jpg', 'Heist genre poster: a figure inside a keyhole of light beside a rust vault door'],
-  ['/brand/poster-disaster.jpg', 'Disaster genre poster: a black sun ringed in gold over burning towers'],
-  ['/brand/poster-scifi.jpg', 'Sci fi genre poster: an astronaut beneath a ringed planet'],
-  ['/brand/poster-silent-film.jpg', 'Silent film genre poster: a figure tied to a railway track as a train approaches'],
-  ['/brand/poster-documentary.jpg', 'Documentary genre poster: round glasses over lines of text'],
+  [withBasePath('/brand/poster-heist.jpg'), 'Heist genre poster: a figure inside a keyhole of light beside a rust vault door'],
+  [withBasePath('/brand/poster-disaster.jpg'), 'Disaster genre poster: a black sun ringed in gold over burning towers'],
+  [withBasePath('/brand/poster-scifi.jpg'), 'Sci fi genre poster: an astronaut beneath a ringed planet'],
+  [withBasePath('/brand/poster-silent-film.jpg'), 'Silent film genre poster: a figure tied to a railway track as a train approaches'],
+  [withBasePath('/brand/poster-documentary.jpg'), 'Documentary genre poster: round glasses over lines of text'],
 ];
 const chips = ['All', 'Directors', 'DOPs', 'Editors', 'Actors', 'Sound'];
 
@@ -52,10 +53,10 @@ export default function BrandHome() {
     <header className="lp-wrap lp-header">
       <p className="lp-city">DUBAI<span className="lp-dots" aria-hidden="true"><span /><span /><span /></span></p>
       <div className="lp-mid">
-        <img className="lp-logo-48" src="/brand/logo-48hfp-ink.png" alt="The 48 Hour Film Project" />
+        <img className="lp-logo-48" src={withBasePath("/brand/logo-48hfp-ink.png")} alt="The 48 Hour Film Project" />
         <p className="lp-date">27 TO 29 NOV 2026</p>
       </div>
-      <img className="lp-logo-lm" src="/brand/logo-like-minds.png" alt="Like Minds, UAE's Creative Community" />
+      <img className="lp-logo-lm" src={withBasePath("/brand/logo-like-minds.png")} alt="Like Minds, UAE's Creative Community" />
     </header>
     <div className="lp-wrap lp-tools">
       <a href="#about">About</a>
@@ -73,7 +74,7 @@ export default function BrandHome() {
         </div>
         <figure className="lp-figure">
           <Trio className="lp-trio-desk" />
-          <img className="lp-poster" src="/brand/poster-sadu-whos-in-your-team.jpg" alt="Sadu series poster: the Dubai skyline woven in Sadu inside a rust sun" />
+          <img className="lp-poster" src={withBasePath("/brand/poster-sadu-whos-in-your-team.jpg")} alt="Sadu series poster: the Dubai skyline woven in Sadu inside a rust sun" />
           <figcaption className="lp-caption">Dubai. 27 to 29 November 2026</figcaption>
         </figure>
       </div>
@@ -115,7 +116,7 @@ export default function BrandHome() {
           </div>
         </div>
         <div className="lp-panel lp-profile">
-          <img src="/brand/avatar-maya.jpg" alt="Example profile photo of Maya C." />
+          <img src={withBasePath("/brand/avatar-maya.jpg")} alt="Example profile photo of Maya C." />
           <div><h3>Maya C.</h3><p className="lp-role">DOP · Dubai</p></div>
           <p className="lp-bio">Shoots short films and music videos. Has her own camera kit. Looking for a director with a story.</p>
           <div className="lp-chip-row"><span className="lp-chip">Camera</span><span className="lp-chip">Lighting</span><span className="lp-chip">Colour</span></div>
@@ -130,9 +131,9 @@ export default function BrandHome() {
 
     <section className="lp-rust">
       <div className="lp-float" aria-hidden="true">
-        <img src="/brand/poster-horror.jpg" alt="" />
-        <img src="/brand/poster-western.jpg" alt="" />
-        <img src="/brand/poster-noir.jpg" alt="" />
+        <img src={withBasePath("/brand/poster-horror.jpg")} alt="" />
+        <img src={withBasePath("/brand/poster-western.jpg")} alt="" />
+        <img src={withBasePath("/brand/poster-noir.jpg")} alt="" />
       </div>
       <div className="lp-wrap">
         <p className="lp-kicker">Early crew bonus</p>
@@ -150,7 +151,7 @@ export default function BrandHome() {
           <p className="lp-lead">The 48 Hour Film Project is a filmmaking challenge run in cities around the world. Teams write, shoot and edit a short film in one weekend. After a long break, it&apos;s back in Dubai, run by Like Minds.</p>
           <div className="lp-actions"><Link className="lp-btn lp-btn-ink" href={profileHref}>Find your crew <Arrow /></Link></div>
         </div>
-        <img className="lp-poster" src="/brand/poster-western.jpg" alt="Western genre poster: a rider on a camel against a white sun" style={{ maxWidth: 520, justifySelf: 'end' }} />
+        <img className="lp-poster" src={withBasePath("/brand/poster-western.jpg")} alt="Western genre poster: a rider on a camel against a white sun" style={{ maxWidth: 520, justifySelf: 'end' }} />
       </div>
     </section>
 
@@ -182,9 +183,9 @@ export default function BrandHome() {
       <div className="lp-wrap lp-photos">
         <div className="lp-copy" style={{ gap: 16 }}><p className="lp-kicker">Dubai has done this before</p><h2>Back on the big screen.</h2></div>
         <div className="lp-steps">
-          <figure><img src="/brand/past-jbr-finals.jpg" alt="Our films on the big screen at the 48 Hour Film Project finals, JBR Beach" /><figcaption>Finals night, JBR Beach</figcaption></figure>
-          <figure><img src="/brand/past-calltime-winners-2019.jpg" alt="Team CallTime holding their winner certificates, Dubai 2019" /><figcaption>Team CallTime, winners, 2019</figcaption></figure>
-          <figure><img src="/brand/past-crew-at-monitor-2019.jpg" alt="A Dubai crew checking a shot on the camera monitor, 2019" /><figcaption>On set, 2019</figcaption></figure>
+          <figure><img src={withBasePath("/brand/past-jbr-finals.jpg")} alt="Our films on the big screen at the 48 Hour Film Project finals, JBR Beach" /><figcaption>Finals night, JBR Beach</figcaption></figure>
+          <figure><img src={withBasePath("/brand/past-calltime-winners-2019.jpg")} alt="Team CallTime holding their winner certificates, Dubai 2019" /><figcaption>Team CallTime, winners, 2019</figcaption></figure>
+          <figure><img src={withBasePath("/brand/past-crew-at-monitor-2019.jpg")} alt="A Dubai crew checking a shot on the camera monitor, 2019" /><figcaption>On set, 2019</figcaption></figure>
         </div>
       </div>
     </section>

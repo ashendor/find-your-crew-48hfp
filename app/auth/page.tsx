@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCrewSupabase } from '@/lib/crew-supabase';
 import { armLoader, clearLoader } from '@/components/RouteLoader';
+import { withBasePath } from '@/lib/base-path';
 import '../profile/creator.css';
 import './auth-modern.css';
 import '../brand-skin.css';
@@ -41,15 +42,15 @@ export default function AuthPage() {
     if (!client || busy) return;
     setBusy(true);
     setError('');
-    // /profile is already on the production Supabase redirect allowlist.
-    // It sends incomplete profiles to onboarding and completed profiles to
-    // their editor. Existing accounts and profile IDs are preserved.
+    // Google returns to /48hrproject/profile. That exact URL has to be allowed
+    // in the Supabase redirect list. Incomplete profiles continue to onboarding.
+    // Existing accounts and profile IDs are preserved.
     window.sessionStorage.setItem('fc:return-from-signin', '1');
     armLoader();
     const { error: oauthError } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/profile',
+        redirectTo: window.location.origin + withBasePath('/profile'),
         queryParams: { prompt: 'select_account' },
       },
     });

@@ -30,7 +30,7 @@
 .fc-space-node-body h2{font:700 32px/1.1 'Playfair Display',Georgia,serif;margin:4px 0 9px;letter-spacing:-.025em}
 .fc-space-node-body p{font-size:12px;line-height:1.5;color:#c9b79d;max-width:290px}
 .fc-space-node-bottom{padding-top:13px;border-top:1px solid #7c634b78;color:#e7bf81;font-size:12px;font-weight:700}
-.fc-space-node-discover{min-height:315px;background:linear-gradient(100deg,#252018e8,#3e2715b3),url('/hero-filmset.webp') center/cover;border-color:#b58c54}
+.fc-space-node-discover{min-height:315px;background:linear-gradient(100deg,#252018e8,#3e2715b3),url('/48hrproject/hero-filmset.webp') center/cover;border-color:#b58c54}
 .fc-space-node-discover:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 25%,#d8ab472e,transparent 55%);z-index:-1}
 .fc-space-node-discover .fc-space-node-symbol{font-size:43px}
 .fc-space-node-discover .fc-space-node-body h2{font-size:43px}

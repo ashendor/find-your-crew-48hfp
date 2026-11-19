@@ -33,7 +33,16 @@
 .lm-shotwrap{position:relative}
 .lm-shot-x{position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border:0;border-radius:50%;background:#F6F1E7;color:#1A1817;font-size:18px;line-height:1;cursor:pointer}
 .lm-shot-x:disabled{opacity:.5}
-.lm-addline{display:flex;align-items:center;justify-content:center;min-height:46px;margin-top:12px;border-radius:12px;border:1.5px solid #1A1817;color:#1A1817;font:800 14px Archivo,Arial,sans-serif;text-decoration:none}
+.lm-teamlist{display:grid;gap:12px;width:min(100%,520px);margin-inline:auto}
+.lm-teamhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lm-teamhead h2{margin:0;font-size:18px;font-weight:800;letter-spacing:-.03em}
+.lm-teamhead p{margin:3px 0 0;color:#6F675F;font-size:13px;font-weight:600}
+.lm-addchip{display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 14px 0 11px;border-radius:999px;background:#1A1817;color:#F6F1E7;font:800 13px Archivo,Arial,sans-serif;text-decoration:none;flex:none}
+.lm-addchip span{font-size:18px;font-weight:500;line-height:1}
+.lm-addchip:focus-visible{outline:2px solid #C44832;outline-offset:3px}
+.lm-teamcard{background:#FBF7F0;border-radius:20px;padding:2px 16px}
+.lm-teamcard .lm-rowitem{padding:14px 0;border-bottom:1px solid #EFE6D8}
+.lm-teamcard .lm-rowitem:last-child{border-bottom:0}
 
 .lm-search{display:flex;align-items:center;gap:8px;background:#EFE8DA;border-radius:999px;padding:12px 16px;margin:4px 0 14px}
 .lm-search input{border:0;background:transparent;width:100%;font:500 14px Archivo,Arial,sans-serif;color:#1A1817;outline:none}
@@ -257,7 +266,7 @@ button.lm-plat.lm-plat-add{border:1px solid #E6DDD0}
 .lm-photo img,.lm-photo span{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#E7D3A8;display:grid;place-items:center;font-size:24px;font-weight:800}
 .lm-card p{margin:0}
 
-.lm-create-bg{position:absolute;inset:0;background:#1A1817 url('/brand/past-jbr-finals.jpg') center/cover;filter:blur(14px) brightness(.72);transform:scale(1.08)}
+.lm-create-bg{position:absolute;inset:0;background:#1A1817 url('/48hrproject/brand/past-jbr-finals.jpg') center/cover;filter:blur(14px) brightness(.72);transform:scale(1.08)}
 .lm-sheet{position:fixed;inset:0;background:#1A181740;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0 14px calc(86px + env(safe-area-inset-bottom))}
 .lm-sheet-panel{width:min(412px,100%);background:#FBF7F0;border-radius:28px;padding:20px 18px 16px;max-height:78svh;overflow:auto;box-shadow:0 28px 70px #1A181766;animation:lm-rise .28s ease-out}
 .lm-grab{display:none}

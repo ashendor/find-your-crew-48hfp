@@ -9,8 +9,9 @@ import HeaderActions from '@/components/HeaderActions';
 import {useCrewUser} from '@/lib/use-crew';
 import {ROLES,type Creator} from '@/lib/crew-types';
 import '../platform.css';
+import { withBasePath } from '@/lib/base-path';
 
-const stills = ['/brand/poster-heist.jpg','/brand/poster-disaster.jpg','/brand/poster-scifi.jpg','/brand/poster-silent-film.jpg','/brand/poster-documentary.jpg','/brand/poster-western.jpg','/brand/past-jbr-finals.jpg','/brand/past-crew-at-monitor-2019.jpg','/brand/poster-noir.jpg','/brand/poster-horror.jpg'];
+const stills = [withBasePath('/brand/poster-heist.jpg'),withBasePath('/brand/poster-disaster.jpg'),withBasePath('/brand/poster-scifi.jpg'),withBasePath('/brand/poster-silent-film.jpg'),withBasePath('/brand/poster-documentary.jpg'),withBasePath('/brand/poster-western.jpg'),withBasePath('/brand/past-jbr-finals.jpg'),withBasePath('/brand/past-crew-at-monitor-2019.jpg'),withBasePath('/brand/poster-noir.jpg'),withBasePath('/brand/poster-horror.jpg')];
 const chips = ['All', ...ROLES];
 
 function ExploreInner(){

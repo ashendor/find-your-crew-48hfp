@@ -6,6 +6,7 @@ import type {Creator, Crew, Project} from '@/lib/crew-types';
 import {nameOf} from '@/lib/crew-types';
 import PlatformBoard, {type PlatformCard} from '@/components/PlatformBoard';
 import Tabs from '@/components/Tabs';
+import { withBasePath } from '@/lib/base-path';
 
 export default function CreatorDesk({creator, viewer, onConnect, platforms, extras}:{creator:Creator; viewer:string; onConnect:()=>void; platforms: PlatformCard[]; extras: (PlatformCard & {id: string})[]}){
   const [tab, setTab] = useState<'work'|'projects'|'teams'>('work');
@@ -35,7 +36,7 @@ export default function CreatorDesk({creator, viewer, onConnect, platforms, extr
     desktop.addEventListener('change', load);
     return () => { active = false; desktop.removeEventListener('change', load); };
   }, [creator.id, viewer]);
-  const cover = creator.avatar_url || '/brand/past-jbr-finals.jpg';
+  const cover = creator.avatar_url || withBasePath('/brand/past-jbr-finals.jpg');
   return <section className="lm-desk lm-desk-profile">
     <div className="lm-desk-cover" style={{backgroundImage:'url(' + JSON.stringify(cover) + ')'}} />
     <div className="lm-desk-id">
