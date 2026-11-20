@@ -14,6 +14,7 @@ import HeaderActions from '@/components/HeaderActions';
 import PhotoView from '@/components/PhotoView';
 import ProfileBio from '@/components/ProfileBio';
 import {FilmLoader} from '@/components/FilmLoader';
+import {armLoader} from '@/components/RouteLoader';
 import {compressImage} from '@/lib/compress-image';
 import {getCrewSupabase,CREW_AVATAR_BUCKET} from '@/lib/crew-supabase';
 import {publicUrl} from '@/lib/base-path';
@@ -51,6 +52,7 @@ function ProfilePage(){
  const [dirty,setDirty]=useState(false);
  const [linking,setLinking]=useState<null|{name:string;key:LinkKey}|{name:'Others'}>(null),[linkUrl,setLinkUrl]=useState(''),[otherName,setOtherName]=useState(''),[linkBusy,setLinkBusy]=useState(false),[linkError,setLinkError]=useState('');
  const [extras,setExtras]=useState<Work[]>([]);
+ const [deleteOpen,setDeleteOpen]=useState(false),[deleting,setDeleting]=useState(false),[deleteError,setDeleteError]=useState('');
  const photoRef=useRef<HTMLInputElement>(null);
 
  useEffect(()=>{if(!client){setLoading(false);return}let active=true;(async()=>{
@@ -94,9 +96,10 @@ function ProfilePage(){
  async function save(e:FormEvent){
   e.preventDefault();if(!client||!userId||saving||photoBusy)return;setError('');setSuccess('');
   if(!/^[a-z0-9_]{3,24}$/.test(form.username)){setError('Creator handle must be 3–24 lowercase letters, numbers or underscores.');return}
-  if(!form.display_name.trim()||!form.primary_role){setError('Your name and primary filmmaking role are required.');return}
+  const roles=Array.from(new Set([form.primary_role,...form.categories].filter(Boolean)));
+  if(!form.display_name.trim()||!roles.length){setError('Your name and at least one role are required.');return}
   setSaving(true);
-  const payload={id:userId,username:form.username,display_name:form.display_name.trim(),headline:form.headline.trim(),bio:form.bio.trim(),location:form.location.trim(),avatar_url:form.avatar_url||null,primary_role:form.primary_role,categories:Array.from(new Set([form.primary_role,...form.categories])),skills_tags:form.skills_tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),intent:form.intent,experience:form.experience,portfolio_url:form.portfolio_url||null,available_for_48hfp:form.available_for_48hfp,available_for_collaboration:form.available_for_collaboration,onboarding_complete:true,updated_at:new Date().toISOString()};
+  const payload={id:userId,username:form.username,display_name:form.display_name.trim(),headline:form.headline.trim(),bio:form.bio.trim(),location:form.location.trim(),avatar_url:form.avatar_url||null,primary_role:roles[0],categories:roles,skills_tags:form.skills_tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),intent:form.intent,experience:form.experience,portfolio_url:form.portfolio_url||null,available_for_48hfp:form.available_for_48hfp,available_for_collaboration:form.available_for_collaboration,onboarding_complete:true,updated_at:new Date().toISOString()};
   const links={instagram_url:form.instagram_url||null,youtube_url:form.youtube_url||null,vimeo_url:form.vimeo_url||null,behance_url:form.behance_url||null,dribbble_url:form.dribbble_url||null,website_url:form.website_url||null};
   let {error:saveError}=await client.from('profiles').upsert({...payload,...links},{onConflict:'id'});
   if(saveError&&schemaMissing(saveError)){({error:saveError}=await client.from('profiles').upsert(payload,{onConflict:'id'}))}
@@ -134,6 +137,22 @@ function ProfilePage(){
   if(deleteError){setError(deleteError.message);return}
   setExtras(v=>v.filter(row=>row.id!==id));
  }
+ async function deleteProfile(){
+  if(!client||!userId||deleting)return;
+  setDeleting(true);setDeleteError('');
+  const folder=await client.storage.from(CREW_AVATAR_BUCKET).list(userId,{limit:100});
+  const photos=(folder.data||[]).filter(file=>file.name);
+  if(photos.length)await client.storage.from(CREW_AVATAR_BUCKET).remove(photos.map(file=>userId+'/'+file.name));
+  const {error:rpcError}=await client.rpc('delete_own_account');
+  if(rpcError){
+    setDeleting(false);
+    setDeleteError(schemaMissing(rpcError)?'Profile deletion is not switched on in the database yet.':rpcError.message);
+    return;
+  }
+  await client.auth.signOut();
+  armLoader();
+  router.replace('/');
+ }
  async function share(){
   const url=publicUrl('/creators/'+encodeURIComponent(form.username));
   if(navigator.share){try{await navigator.share({title:'My Creator Card · Find Your Crew',url});return}catch{}}
@@ -159,7 +178,7 @@ function ProfilePage(){
     </>}
     <ProfilePanels userId={userId} tab={tab}/>
   </>}
-  {tab==='settings'&&<nav className="lm-settings" aria-label="Settings"><Link className="lm-setrow" href="/profile?tab=edit"><span>Edit profile<small>Photo, name, roles, and links</small></span><em aria-hidden="true">›</em></Link><SignOutButton className="lm-setrow lm-setout" /></nav>}
+  {tab==='settings'&&<nav className="lm-settings" aria-label="Settings"><Link className="lm-setrow" href="/profile?tab=edit"><span>Edit profile<small>Photo, name, roles, and links</small></span><em aria-hidden="true">›</em></Link><button type="button" className="lm-setrow lm-setdanger" onClick={()=>{setDeleteError('');setDeleteOpen(true)}}><span>Delete profile<small>Remove your info. You can register again later.</small></span></button><SignOutButton className="lm-setrow lm-setout" /></nav>}
   {tab==='edit'&&<form id="lm-edit" className="lm-edit" onSubmit={save}>
     <input ref={photoRef} hidden type="file" accept="image/*" onChange={upload} aria-label="Upload a profile photo"/>
     <div className="lm-edit-photo">
@@ -173,7 +192,6 @@ function ProfilePage(){
       <div className="lm-edit-group">
         <label htmlFor="studio-name">Name<input id="studio-name" className="lm-field" required maxLength={80} value={form.display_name} onChange={e=>set('display_name',e.target.value)} placeholder="Your name"/></label>
         <label htmlFor="studio-handle">Handle<input id="studio-handle" className="lm-field" required minLength={3} maxLength={24} value={form.username} onChange={e=>set('username',e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))} placeholder="yourname"/></label>
-        <label htmlFor="studio-role">Creative role<select id="studio-role" className="lm-field" required value={form.primary_role} onChange={e=>set('primary_role',e.target.value)}><option value="">Choose a role</option>{(form.primary_role && !ROLES.includes(form.primary_role) ? [form.primary_role, ...ROLES] : ROLES).map(r=><option key={r} value={r}>{r}</option>)}</select></label>
         <label htmlFor="studio-city">City<input id="studio-city" className="lm-field" maxLength={80} value={form.location} onChange={e=>set('location',e.target.value)} placeholder="Dubai"/></label>
         <label htmlFor="studio-headline">One-liner<input id="studio-headline" className="lm-field" maxLength={120} value={form.headline} onChange={e=>set('headline',e.target.value)} placeholder="What you make"/></label>
         <label htmlFor="studio-bio">Bio<textarea id="studio-bio" className="lm-field" maxLength={600} rows={3} value={form.bio} onChange={e=>set('bio',e.target.value)} placeholder="A short introduction"/></label>
@@ -187,8 +205,8 @@ function ProfilePage(){
       </div>
     </section>
     <section>
-      <h2>Also works as</h2>
-      <div className="lm-pills">{[...form.categories.filter(r=>r!==form.primary_role && !ROLES.includes(r)), ...ROLES.filter(r=>r!==form.primary_role)].map(r=><button type="button" key={r} aria-pressed={form.categories.includes(r)} onClick={()=>set('categories',form.categories.includes(r)?form.categories.filter(x=>x!==r):[...form.categories,r])}>{r}</button>)}</div>
+      <h2>Roles</h2>
+      <div className="lm-pills">{[...form.categories.filter(r=>!ROLES.includes(r)), ...ROLES].filter((role, index, list)=>list.indexOf(role)===index).map(role=>{const selected=Array.from(new Set([form.primary_role,...form.categories].filter(Boolean)));return <button type="button" key={role} aria-pressed={selected.includes(role)} onClick={()=>{const next=selected.includes(role)?selected.filter(item=>item!==role):[...selected,role];set('categories',next);set('primary_role',next[0]||'');}}>{role}</button>})}</div>
       <div className="lm-edit-group">
         <label htmlFor="studio-exp">Experience<select id="studio-exp" className="lm-field" value={form.experience} onChange={e=>set('experience',e.target.value)}><option value="emerging">Emerging</option><option value="experienced">Experienced</option><option value="professional">Professional</option></select></label>
         <label htmlFor="studio-intent">Here to<select id="studio-intent" className="lm-field" value={form.intent} onChange={e=>set('intent',e.target.value as typeof form.intent)}>{INTENTS.map(i=><option key={i.value} value={i.value}>{i.title}</option>)}</select></label>
@@ -209,6 +227,16 @@ function ProfilePage(){
     </section>
     <button type="button" className="lm-edit-copy" onClick={()=>void share()} disabled={dirty}>Copy profile link</button>
   </form>}
+  {deleteOpen&&<div className="lm-sheet" role="presentation" onClick={()=>!deleting&&setDeleteOpen(false)}>
+    <div className="lm-sheet-panel lm-delete-sheet" role="dialog" aria-modal="true" aria-labelledby="lm-delete-profile" onClick={e=>e.stopPropagation()}>
+      <div className="lm-grab" aria-hidden="true" />
+      <h2 id="lm-delete-profile">Delete profile</h2>
+      <p className="lm-muted">This removes your name, photo, the teams you lead, and your chats. You can sign in later and create a profile again. Your username can be used again.</p>
+      {deleteError&&<p className="lm-alert" role="alert">{deleteError}</p>}
+      <button className="lm-btn lm-btn-danger" type="button" disabled={deleting} onClick={()=>void deleteProfile()}>{deleting?'Deleting…':'Delete profile'}</button>
+      <button className="lm-btn-line" type="button" disabled={deleting} onClick={()=>setDeleteOpen(false)}>Cancel</button>
+    </div>
+  </div>}
   {linking&&<div className="lm-sheet" role="presentation" onClick={()=>!linkBusy&&setLinking(null)}>
     <form className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-link-title" onClick={e=>e.stopPropagation()} onSubmit={e=>void linkPlatform(e)}>
       <div className="lm-link-head"><SocialIcon name={linking.name} brand={linking.name!=='Others'}/><div><h2 id="lm-link-title">{linking.name==='Others'?'Add a platform':'Add '+linking.name}</h2><p>{linking.name==='Others'?'Name the platform, then paste its link.':'Paste the link. It is saved straight to your profile.'}</p></div><button className="lm-iconbtn" type="button" onClick={()=>setLinking(null)} aria-label="Close">✕</button></div>
