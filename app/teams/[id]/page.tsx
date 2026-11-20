@@ -8,7 +8,8 @@ import BackButton from '@/components/BackButton';
 import HeaderActions from '@/components/HeaderActions';
 import {armLoader} from '@/components/RouteLoader';
 import {useCrewUser} from '@/lib/use-crew';
-import {projectTitle,schemaMissing,type Connection,type Crew,type Creator,type Project} from '@/lib/crew-types';
+import {ROLES,projectTitle,schemaMissing,type Crew,type Creator,type Project} from '@/lib/crew-types';
+import {parseNeeds,roleSeats,type RoleNeed} from '@/lib/team-roles';
 import '../../platform.css';
 
 const SHARE_URL = 'https://likeminds.ae/48hrproject';
@@ -30,14 +31,19 @@ function TeamScreen(){
   const [projects,setProjects] = useState<Project[]>([]);
   const [featured,setFeatured] = useState<Project[]>([]);
   const [directory,setDirectory] = useState<Creator[]>([]);
-  const [links,setLinks] = useState<Connection[]>([]);
-  const [query,setQuery] = useState('');
+  const [directoryReady,setDirectoryReady] = useState(false);
+  const [finding,setFinding] = useState(false);
+  const [seekRole,setSeekRole] = useState('');
+  const [seatNote,setSeatNote] = useState('');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [notice,setNotice] = useState('');
   const [missing,setMissing] = useState(false);
   const [myRequest,setMyRequest] = useState(false);
   const [applications,setApplications] = useState<{id:string;user_id:string}[]>([]);
+  const [editingRoles,setEditingRoles] = useState(false);
+  const [draft,setDraft] = useState<RoleNeed[]>([]);
+  const [addRole,setAddRole] = useState('');
   const load = useCallback(async () => {
     if (!client || !id) return;
     const {data,error:teamError} = await client.from('crews').select('*').eq('id', id).maybeSingle();
@@ -76,56 +82,56 @@ function TeamScreen(){
   const owner = team?.owner_id === userId;
   useEffect(() => {
     if (!client || !owner || !userId) return;
-    void Promise.all([
-      client.from('profiles').select('*').eq('onboarding_complete', true).neq('id', userId).order('display_name').limit(200),
-      client.from('connections').select('id,requester_id,recipient_id,status').or('requester_id.eq.' + userId + ',recipient_id.eq.' + userId),
-    ]).then(([profiles, connections]) => {
-      setDirectory((profiles.data || []) as Creator[]);
-      setLinks((connections.data || []) as Connection[]);
+    void client.from('profiles').select('*').eq('onboarding_complete', true).neq('id', userId).order('display_name').limit(200).then(({data}) => {
+      setDirectory((data || []) as Creator[]);
+      setDirectoryReady(true);
     });
   }, [client, owner, userId]);
-  const hits = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (needle.length < 2) return [];
-    return directory.filter(person => (person.display_name + ' ' + person.username + ' ' + (person.primary_role || '')).toLowerCase().includes(needle)).slice(0, 8);
-  }, [directory, query]);
+  const seekers = useMemo(() => {
+    if (!seekRole) return [];
+    const taken = new Set(members.filter(member => member.status === 'accepted' || member.status === 'invited').map(member => member.user_id));
+    return directory.filter(person => {
+      if (taken.has(person.id)) return false;
+      const roles = [person.primary_role, ...(person.categories || [])].filter(Boolean);
+      return roles.includes(seekRole);
+    });
+  }, [directory, members, seekRole]);
   if (loading || !user) return <FilmLoader delay={600} />;
   if (!team) return missing ? <PlatformShell><header className="lm-top"><BackButton fallback="/teams" /><HeaderActions /></header><p className="fc-error">{error || 'Team not found.'}</p></PlatformShell> : <FilmLoader delay={600} />;
 
   function membership(personId:string){
     return members.find(member => member.user_id === personId && member.status !== 'declined');
   }
-  function connectionWith(personId:string){
-    return links.find(link => (link.status === 'pending' || link.status === 'accepted') && ((link.requester_id === userId && link.recipient_id === personId) || (link.recipient_id === userId && link.requester_id === personId)));
-  }
-
-  async function invitePerson(person:Creator){
+  async function invitePerson(person:Creator, role?:string){
     if (!client || !owner || busy || membership(person.id)) return;
+    const seat = role || person.primary_role || 'Member';
     setBusy(true); setError(''); setNotice('');
-    const {error:insertError} = await client.from('crew_members').insert({crew_id:id, user_id:person.id, invited_by:userId, role:person.primary_role || 'Member', status:'invited'});
+    const {error:insertError} = await client.from('crew_members').insert({crew_id:id, user_id:person.id, invited_by:userId, role:seat, status:'invited'});
     setBusy(false);
     if (insertError) setError(insertError.code === '23505' ? 'They already have an invitation.' : insertError.message);
-    else { setNotice('Invitation sent. They become part of the team only after they accept.'); void load(); }
+    else { setNotice('Invited as ' + seat + '. They join this team only after they accept.'); void load(); }
   }
 
-  async function connectPerson(person:Creator){
-    if (!client || !owner || busy || connectionWith(person.id)) return;
-    setBusy(true); setError(''); setNotice('');
-    const {data,error:insertError} = await client.from('connections').insert({
-      requester_id:userId, recipient_id:person.id, status:'pending', purpose:'network', project_id:null, crew_id:null, team_name:null, note:null,
-    }).select('id,requester_id,recipient_id,status').single();
-    setBusy(false);
-    if (insertError) setError(insertError.code === '23505' ? 'A connection already exists or is waiting for a reply.' : insertError.message);
-    else { setLinks(list => [...list, data as Connection]); setNotice('Connection request sent. Accepting it opens a chat. It does not add them to the team.'); }
+  function article(role:string){ return /^[aeiou]/i.test(role) ? 'an' : 'a'; }
+  function seatCopy(role:string){
+    return [
+      (team?.name || 'This team') + ' is looking for ' + article(role) + ' ' + role + '.',
+      (team?.description || '').trim(),
+      'Come make it with them on LikeMinds.',
+    ].filter(Boolean).join('\n\n');
   }
 
-  async function shareInvite(){
-    const payload = {title:(team?.name || 'Team') + ' · LikeMinds', text:'Join me on LikeMinds for the 48 Hour Film Project.', url:SHARE_URL};
+  async function shareText(title:string, text:string, copied:string){
+    const payload = {title, text, url:SHARE_URL};
     if (typeof navigator.share === 'function') {
       try { await navigator.share(payload); return; } catch (shareError) { if (shareError instanceof DOMException && shareError.name === 'AbortError') return; }
     }
-    try { await navigator.clipboard.writeText(SHARE_URL); setNotice('Link copied.'); }
+    try { await navigator.clipboard.writeText(text + '\n\n' + SHARE_URL); setNotice(copied); }
     catch { setError('Could not open sharing. The link is ' + SHARE_URL); }
+  }
+
+  async function shareInvite(){
+    await shareText((team?.name || 'Team') + ' · LikeMinds', 'Join me on LikeMinds for the 48 Hour Film Project.', 'Link copied.');
   }
 
   async function removeTeam(){
@@ -175,6 +181,36 @@ function TeamScreen(){
     else { setNotice(accept ? 'They’re on the team.' : 'Request declined.'); void load(); }
   }
 
+  function openRoles(){
+    setDraft(parseNeeds(team?.role_needs));
+    setAddRole('');
+    setError('');
+    setEditingRoles(true);
+  }
+  function changeCount(role:string, count:number){
+    const next = Math.max(1, Math.min(12, count));
+    setDraft(current => current.map(item => item.role === role ? {...item, count:next} : item));
+  }
+  function addDraftRole(){
+    if (!addRole || draft.some(item => item.role === addRole)) return;
+    setDraft(current => [...current, {role:addRole, count:1}]);
+    setAddRole('');
+  }
+  async function saveNeeds(){
+    if (!client || !owner || busy) return;
+    setBusy(true); setError(''); setNotice('');
+    const {error:updateError} = await client.from('crews').update({role_needs:draft}).eq('id', id).eq('owner_id', userId);
+    setBusy(false);
+    if (updateError) { setError(schemaMissing(updateError) ? 'Run the latest LikeMinds SQL update before a team can list the roles it needs.' : updateError.message); return; }
+    setTeam(current => current ? {...current, role_needs:draft} : current);
+    setEditingRoles(false);
+    setNotice('Roles updated.');
+  }
+
+  const needs = parseNeeds(team.role_needs);
+  const seatRows = roleSeats(needs, members.filter(member => member.status === 'accepted'), team.owner_id, people[team.owner_id]?.primary_role);
+  const seatTotal = seatRows.reduce((total, role) => total + role.count, 0);
+
   async function register(projectId:string){
     if (!client || !owner) return;
     setError(''); setNotice('');
@@ -190,7 +226,100 @@ function TeamScreen(){
       <h1>{team.name}</h1>
     </header>
     <div className="lm-card" style={{marginTop:16}}><p>{team.description || 'People join this team when an invitation is accepted, or when the team lead approves a request.'}</p></div>
-    {error && <p className="lm-alert" role="alert">{error}</p>}
+    {(owner || needs.length > 0) && <section>
+      <div className="lm-section"><h2>Roles</h2>{owner && <button className="lm-textbtn" type="button" onClick={openRoles}>{needs.length ? 'Edit' : 'Add'}</button>}</div>
+      {seatTotal > 0 && <>
+        <ul className="lm-seats">
+          {seatRows.map(role => {
+            const body = <>
+              <div className="lm-seat-top">
+                <strong>{role.role}</strong>
+                <em className={role.open ? '' : 'full'}>{role.open ? role.open + ' open' : 'Filled'}{owner && role.open > 0 && <span className="go" aria-hidden="true">›</span>}</em>
+              </div>
+              <p>{role.filled} of {role.count} filled</p>
+              <span className="pips" aria-hidden="true">{Array.from({length:role.count}, (_, index) => <i key={index} className={index < role.filled ? 'on' : ''} />)}</span>
+            </>;
+            const label = role.role + ', ' + (role.open ? role.open + ' open' : 'filled') + ', ' + role.filled + ' of ' + role.count;
+            return <li key={role.role}>{owner && role.open > 0
+              ? <button className="lm-seat" type="button" aria-label={label + '. Find people'} onClick={() => { setError(''); setSeekRole(role.role); setFinding(true); }}>{body}</button>
+              : <div className="lm-seat" aria-label={label}>{body}</div>}</li>;
+          })}
+        </ul>
+      </>}
+      {!needs.length && owner && <p className="lm-muted">No roles yet. Add the ones this team needs.</p>}
+    </section>}
+    {editingRoles && <div className="lm-sheet" role="presentation" onClick={() => { if (!busy) setEditingRoles(false); }}>
+      <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-edit-roles" onClick={e => e.stopPropagation()}>
+        <div className="lm-rolehead"><h2 id="lm-edit-roles">Edit roles</h2><button type="button" aria-label="Close" onClick={() => { if (!busy) setEditingRoles(false); }}>×</button></div>
+        <p className="lm-muted">Add a role, change how many people it needs, or remove it.</p>
+        <div className="lm-role-edit">
+          {draft.map(item => <div className="row" key={item.role}>
+            <strong>{item.role}</strong>
+            <div className="step">
+              <button type="button" aria-label={'Fewer ' + item.role} disabled={item.count <= 1} onClick={() => changeCount(item.role, item.count - 1)}>−</button>
+              <b>{item.count}</b>
+              <button type="button" aria-label={'More ' + item.role} disabled={item.count >= 12} onClick={() => changeCount(item.role, item.count + 1)}>+</button>
+            </div>
+            <button className="remove" type="button" onClick={() => setDraft(current => current.filter(role => role.role !== item.role))}>Remove</button>
+          </div>)}
+          {!draft.length && <p className="lm-muted">No roles yet.</p>}
+        </div>
+        {ROLES.some(role => !draft.some(item => item.role === role)) && <div className="lm-role-add">
+          <select aria-label="Role to add" value={addRole} onChange={e => setAddRole(e.target.value)}>
+            <option value="">Choose a role</option>
+            {ROLES.filter(role => !draft.some(item => item.role === role)).map(role => <option key={role} value={role}>{role}</option>)}
+          </select>
+          <button className="lm-btn" type="button" disabled={!addRole} onClick={addDraftRole}>Add</button>
+        </div>}
+        {error && <p className="lm-alert" role="alert">{error}</p>}
+        <div className="lm-actions">
+          <button className="lm-btn" type="button" disabled={busy} onClick={() => void saveNeeds()}>{busy ? 'Saving…' : 'Save roles'}</button>
+          <button className="lm-btn-line" type="button" disabled={busy} onClick={() => setEditingRoles(false)}>Cancel</button>
+        </div>
+      </div>
+    </div>}
+    {finding && <div className="lm-sheet lm-sheet-people" role="presentation" onClick={() => { if (!busy) { setFinding(false); setSeekRole(''); } }}>
+      <div className="lm-sheet-panel lm-sheet-tall" role="dialog" aria-modal="true" aria-labelledby="lm-find-role" onClick={e => e.stopPropagation()}>
+        <div className="lm-rolehead"><h2 id="lm-find-role">{seekRole}</h2><button type="button" aria-label="Close" onClick={() => { if (!busy) { setFinding(false); setSeekRole(''); } }}>×</button></div>
+        <p className="lm-muted">Free profiles who work as {article(seekRole)} {seekRole}.</p>
+        <div className="lm-find">
+          {!directoryReady && <p className="lm-muted">Looking…</p>}
+          {directoryReady && seekers.length > 0 && <div className="lm-hits">
+            {seekers.map(person => {
+              const spot = membership(person.id);
+              const place = [seekRole, person.location].filter(Boolean).join(' · ');
+              const who = <>{person.avatar_url ? <img src={person.avatar_url} alt="" /> : <span className="lm-avatar">{(person.display_name || 'P').slice(0,1)}</span>}<span><strong>{person.display_name || 'Person'}</strong><p>{place}</p></span></>;
+              return <div className="lm-hit" key={person.id}>
+                {person.username ? <Link href={'/creators/' + encodeURIComponent(person.username)}>{who}</Link> : <div className="who">{who}</div>}
+                <button className="lm-btn" type="button" disabled={busy || !!spot} onClick={() => void invitePerson(person, seekRole)}>{spot?.status === 'accepted' ? 'On team' : spot ? 'Invited' : 'Invite'}</button>
+              </div>;
+            })}
+          </div>}
+          {directoryReady && !seekers.length && <div className="lm-empty"><strong>No free profiles</strong><p>No one free works as {article(seekRole)} {seekRole} yet.</p></div>}
+        </div>
+        {error && <p className="lm-alert" role="alert">{error}</p>}
+        {directoryReady && <button className="lm-btn-line" type="button" onClick={() => { setFinding(false); setSeatNote(seekRole); setSeekRole(''); }}>Share this seat</button>}
+      </div>
+    </div>}
+    {seatNote && <div className="lm-sheet" role="presentation" onClick={() => setSeatNote('')}>
+      <div className="lm-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="lm-share-role" onClick={e => e.stopPropagation()}>
+        <div className="lm-rolehead"><h2 id="lm-share-role">Share this seat</h2><button type="button" aria-label="Close" onClick={() => setSeatNote('')}>×</button></div>
+        <div className="lm-seatnote">
+          <p className="kicker">Open seat</p>
+          <h3>{seatNote}</h3>
+          <p>{team.name} is looking for {article(seatNote)} {seatNote}.</p>
+          {team.description?.trim() && <p>{team.description}</p>}
+          <p>Come make it with them on LikeMinds.</p>
+        </div>
+        <a className="lm-linkrow" href={SHARE_URL} target="_blank" rel="noopener noreferrer">
+          <span className="lm-linkmark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 5h5v5"/><path d="M19 5 10 14"/><path d="M17 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h5"/></svg></span>
+          <span><strong>Invite link</strong><small>likeminds.ae/48hrproject</small></span>
+          <em aria-hidden="true">↗</em>
+        </a>
+        <button className="lm-btn" type="button" onClick={() => void shareText(team.name + ' needs ' + seatNote, seatCopy(seatNote), 'Note copied.')}>Share</button>
+      </div>
+    </div>}
+    {error && !editingRoles && !finding && !seatNote && <p className="lm-alert" role="alert">{error}</p>}
     {notice && <p className="lm-note" role="status">{notice}</p>}
     <section>
       <div className="lm-section"><h2>People</h2></div>
@@ -208,28 +337,6 @@ function TeamScreen(){
           <button className="lm-btn-line" type="button" disabled={busy} onClick={() => void answerJoin(application.id, false)}>Decline</button>
         </div>
       </div>)}
-    </section>}
-    {owner && <section>
-      <div className="lm-section"><h2>Find someone</h2></div>
-      <div className="lm-find">
-        <label className="lm-find-search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8178" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-          <input aria-label="Search people on LikeMinds" placeholder="Search by name or role" value={query} onChange={e => setQuery(e.target.value)} />
-        </label>
-        <p className="lm-muted">Connect only starts a request. Invite adds them to this team after they accept in their inbox.</p>
-        {hits.map(person => {
-          const spot = membership(person.id);
-          const link = connectionWith(person.id);
-          return <div key={person.id}>
-            <PersonRow person={person} fallback="Person" detail={person.primary_role || person.username} />
-            <div className="lm-actions lm-pair">
-              <button className="lm-btn-line" type="button" disabled={busy || !!link} onClick={() => void connectPerson(person)}>{link ? 'Connected' : 'Connect'}</button>
-              <button className="lm-btn" type="button" disabled={busy || !!spot} onClick={() => void invitePerson(person)}>{spot?.status === 'accepted' ? 'On this team' : spot ? 'Invited' : 'Invite'}</button>
-            </div>
-          </div>;
-        })}
-        {query.trim().length >= 2 && !hits.length && <p className="lm-muted">No one on LikeMinds matches that search.</p>}
-      </div>
     </section>}
     <section className="lm-share">
       <div className="lm-section"><h2>Share</h2></div>

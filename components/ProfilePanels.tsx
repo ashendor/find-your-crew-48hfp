@@ -2,15 +2,18 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {getCrewSupabase} from '@/lib/crew-supabase';
-import {projectTitle,type Project} from '@/lib/crew-types';
+import {projectTitle,schemaMissing,type Project} from '@/lib/crew-types';
+import {openingsByCrew,type Opening} from '@/lib/team-openings';
 import TeamCopy from '@/components/TeamCopy';
+import OpenRoles from '@/components/OpenRoles';
 
-type TeamRow = {id:string;name:string;description:string;owner_id:string};
+type TeamRow = {id:string;name:string;description:string;owner_id:string;role_needs?:unknown};
 
 export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab:'work'|'projects'|'teams';owner?:boolean}){
   const client = getCrewSupabase();
   const [projects,setProjects] = useState<Project[]>([]);
   const [teams,setTeams] = useState<TeamRow[]>([]);
+  const [openings,setOpenings] = useState<Record<string, Opening[]>>({});
   useEffect(() => {
     if (!client || !userId || tab === 'work' || (tab === 'teams' && !owner)) return;
     void (async () => {
@@ -25,17 +28,25 @@ export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab
         setProjects([...map.values()].filter(project => project.featured));
       }
       if (tab === 'teams') {
-        const [owned, member] = await Promise.all([
-          client.from('crews').select('id,name,description,owner_id').eq('owner_id', userId),
-          client.from('crew_members').select('crews(id,name,description,owner_id)').eq('user_id', userId).eq('status','accepted'),
+        const withNeeds = await Promise.all([
+          client.from('crews').select('id,name,description,owner_id,role_needs').eq('owner_id', userId),
+          client.from('crew_members').select('crews(id,name,description,owner_id,role_needs)').eq('user_id', userId).eq('status','accepted'),
         ]);
+        const [owned, member] = schemaMissing(withNeeds[0].error) || schemaMissing(withNeeds[1].error)
+          ? await Promise.all([
+            client.from('crews').select('id,name,description,owner_id').eq('owner_id', userId),
+            client.from('crew_members').select('crews(id,name,description,owner_id)').eq('user_id', userId).eq('status','accepted'),
+          ])
+          : withNeeds;
         const map = new Map<string, TeamRow>();
         for (const team of (owned.data || []) as TeamRow[]) map.set(team.id, team);
         for (const row of (member.data || []) as {crews:TeamRow|TeamRow[]|null}[]) {
           const team = Array.isArray(row.crews) ? row.crews[0] : row.crews;
           if (team?.id) map.set(team.id, team);
         }
-        setTeams([...map.values()]);
+        const list = [...map.values()];
+        setTeams(list);
+        setOpenings(await openingsByCrew(client, list));
       }
     })();
   }, [client, userId, tab]);
@@ -49,8 +60,8 @@ export default function ProfilePanels({userId,tab,owner=true}:{userId:string;tab
       <div><h2>Your teams</h2><p>{summary}</p></div>
       {owner && <Link className="lm-addchip" href="/create?mode=team"><span aria-hidden="true">+</span>Add</Link>}
     </div>
-    <div className="lm-teamcard">
-      {teams.map(team => <Link className="lm-rowitem lm-teamline" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar">{team.name.slice(0,1)}</span><div><TeamCopy name={team.name} description={team.description} member /></div></Link>)}
+    <div className="lm-xcards">
+      {teams.map(team => <Link className="lm-xcard" key={team.id} href={'/teams/' + team.id}><span className="lm-avatar lm-mark" aria-hidden="true">{team.name.slice(0,1)}</span><span className="lm-xcard-copy"><TeamCopy name={team.name} description={team.description} /></span><OpenRoles items={openings[team.id] || []} /></Link>)}
     </div>
   </section>;
 }
